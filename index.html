@@ -593,7 +593,115 @@
             .container { padding: 16px; }
             .nav-tab { padding: 12px 16px; font-size: 0.8rem; }
         }
+        /* Financial Overview */
+        .financial-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        .fin-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid var(--slate-200);
+        }
+        .fin-card-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+        .fin-metric {
+            margin-bottom: 14px;
+        }
+        .fin-metric:last-child { margin-bottom: 0; }
+        .fin-metric-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--slate-500);
+            margin-bottom: 4px;
+        }
+        .fin-metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 6px;
+        }
+        .fin-metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--slate-900);
+        }
+        .fin-metric-goal {
+            font-size: 0.8rem;
+            color: var(--slate-500);
+        }
+        .fin-metric-pct {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .fin-metric-pct.ahead { color: var(--green); }
+        .fin-metric-pct.behind { color: var(--red); }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--slate-100);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        .progress-fill.ahead { background: var(--green); }
+        .progress-fill.behind { background: var(--red); }
+        .chart-container {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid var(--slate-200);
+            margin-bottom: 32px;
+            height: 260px;
+        }
+        .fin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+        }
+        .update-btn {
+            background: var(--white);
+            border: 1px solid var(--slate-300);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--slate-700);
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+        }
+        .update-btn:hover { background: var(--slate-50); border-color: var(--gold); color: var(--gold); }
+        .update-btn.loading { opacity: 0.6; pointer-events: none; }
+        .chart-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -657,6 +765,19 @@
                 </div>
             </div>
 
+            <!-- Financial Overview -->
+            <div class="fin-header">
+                <div class="section-title" style="margin-bottom: 0;">2026 Financial Performance</div>
+                <button class="update-btn" onclick="fetchSheetData()" id="updateBtn">↻ Update from Sheet</button>
+            </div>
+            <div class="financial-cards" id="financialCards">
+                <!-- Populated by JS -->
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Cumulative Revenue &amp; Profit — All Companies</div>
+                <canvas id="rollupChart"></canvas>
+            </div>
+
             <!-- Companies -->
             <div class="section-title">Your Organizations</div>
             <div class="companies-grid" id="companiesGrid">
@@ -672,6 +793,16 @@
                         <!-- Populated by JS -->
                     </ul>
                     <button class="add-btn" style="margin-top: 16px;" onclick="openModal('task')">+ Add Task</button>
+                </div>
+            </div>
+
+            <!-- Cookie of the Day -->
+            <div style="margin-top: 32px;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 8px;">🍪 Cookie of the Day</div>
+                <div style="background: linear-gradient(135deg, var(--gold-bg) 0%, #fff8e1 100%); border: 1px solid var(--gold-border); border-radius: 12px; padding: 24px 28px; margin-top: 12px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: -20px; right: -10px; font-size: 80px; opacity: 0.08;">🍪</div>
+                    <p id="cookieOfTheDay" style="font-size: 1.05rem; line-height: 1.7; color: var(--slate-700); font-weight: 500; position: relative; z-index: 1;"></p>
+                    <p style="margin-top: 12px; font-size: 0.8rem; color: var(--slate-500); font-style: italic;">You've done harder things before. You'll do them again.</p>
                 </div>
             </div>
         </div>
@@ -774,6 +905,141 @@
     </div>
 
 <script>
+// ==================== FINANCIAL DATA (from Vistage Monthly Goals sheet) ====================
+// Google Sheet ID and tab for auto-fetch
+const SHEET_ID = '1YwgVi59Zy1bO4P9IjCfG_1M1Vf0YrIVwc__dOcyd74k';
+const SHEET_TAB = '2026';
+const SHEET_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_TAB}`;
+
+function parseSheetValue(val) {
+    if (!val) return 0;
+    val = val.replace(/["\s$,]/g, '').replace(/\(([^)]+)\)/, '-$1');
+    const n = parseFloat(val);
+    return isNaN(n) ? 0 : n;
+}
+
+function parseCSVRow(row) {
+    const result = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < row.length; i++) {
+        const ch = row[i];
+        if (ch === '"') { inQuotes = !inQuotes; }
+        else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+        else { current += ch; }
+    }
+    result.push(current.trim());
+    return result;
+}
+
+async function fetchSheetData() {
+    const btn = document.getElementById('updateBtn');
+    if (btn) { btn.textContent = '↻ Updating...'; btn.classList.add('loading'); }
+
+    try {
+        const resp = await fetch(SHEET_CSV_URL);
+        if (!resp.ok) throw new Error('Sheet not accessible');
+        const csv = await resp.text();
+        const rows = csv.split('\n').map(r => parseCSVRow(r));
+
+        // Helper: extract 12 monthly values from columns B-M (index 1-12)
+        function getMonthlyValues(rowIdx) {
+            if (!rows[rowIdx]) return [];
+            const vals = [];
+            for (let c = 1; c <= 12; c++) {
+                const v = parseSheetValue(rows[rowIdx][c]);
+                vals.push(v);
+            }
+            return vals;
+        }
+
+        // Helper: get only months with actual data
+        // Checks the raw CSV cell — empty string means no data yet
+        function getActualValues(rowIdx) {
+            if (!rows[rowIdx]) return [];
+            const vals = [];
+            for (let c = 1; c <= 12; c++) {
+                const raw = (rows[rowIdx][c] || '').replace(/["\s]/g, '');
+                if (raw === '') break; // empty cell = no data for this month yet
+                vals.push(parseSheetValue(rows[rowIdx][c]));
+            }
+            return vals;
+        }
+
+        // CSV row mapping (0-indexed, hidden rows excluded):
+        // Row 3: WC Revenue 2026 Goal
+        // Row 4: WC Revenue 2026 Actual
+        // Row 8: WC Net Income 2026 Goal
+        // Row 9: WC Net Income 2026 Actual
+        // Row 16: NL Revenue 2026 Goal
+        // Row 17: NL Revenue 2026 Actual
+        // Row 21: NL Net Income 2026 Goal
+        // Row 22: NL Net Income 2026 Actual
+        // Row 28: WB Net Income 2026 Goal
+        // Row 29: WB Net Income 2026 Actual
+
+        FINANCIAL_DATA.woodchuck.revenue.goal = getMonthlyValues(3);
+        FINANCIAL_DATA.woodchuck.revenue.actual = getActualValues(4);
+        FINANCIAL_DATA.woodchuck.profit.goal = getMonthlyValues(8);
+        FINANCIAL_DATA.woodchuck.profit.actual = getActualValues(9);
+
+        FINANCIAL_DATA.natureLink.revenue.goal = getMonthlyValues(16);
+        FINANCIAL_DATA.natureLink.revenue.actual = getActualValues(17);
+        FINANCIAL_DATA.natureLink.profit.goal = getMonthlyValues(21);
+        FINANCIAL_DATA.natureLink.profit.actual = getActualValues(22);
+
+        FINANCIAL_DATA.workbench.revenue.goal = getMonthlyValues(28);
+        FINANCIAL_DATA.workbench.revenue.actual = getActualValues(29);
+        FINANCIAL_DATA.workbench.profit.goal = getMonthlyValues(28);
+        FINANCIAL_DATA.workbench.profit.actual = getActualValues(29);
+
+        // Save timestamp
+        localStorage.setItem('summit-fin-updated', new Date().toISOString());
+
+        // Re-render
+        renderFinancialOverview();
+
+        if (btn) { btn.textContent = '✓ Updated'; setTimeout(() => { btn.textContent = '↻ Update from Sheet'; btn.classList.remove('loading'); }, 2000); }
+    } catch(e) {
+        console.log('Sheet fetch failed, using local data:', e.message);
+        if (btn) { btn.textContent = '✗ Sheet not public'; btn.classList.remove('loading'); setTimeout(() => { btn.textContent = '↻ Update from Sheet'; }, 3000); }
+    }
+}
+
+const FINANCIAL_DATA = {
+    months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    woodchuck: {
+        revenue: {
+            goal:   [275000, 275000, 275000, 269000, 269000, 269000, 269000, 352000, 352000, 352000, 352000, 352000],
+            actual: [297000, 429000]
+        },
+        profit: {
+            goal:   [21170, 21170, 21170, 19875, 19875, 19875, 21475, 74925, 74695, 74695, 74695, 74695],
+            actual: [39000, 89000]
+        }
+    },
+    natureLink: {
+        revenue: {
+            goal:   [150326, 135708, 137106, 169468, 345661, 494809, 533266, 506907, 467977, 467977, 467977, 467977],
+            actual: [149000, 211113]
+        },
+        profit: {
+            goal:   [-50000, -10000, 0, 100000, 100000, 100000, 200000, 100000, 80000, 80000, 80000, 80000],
+            actual: [-63000, 35000]
+        }
+    },
+    workbench: {
+        revenue: {
+            goal:   [30000, 30000, 30000, 30000, 35000, 40000, 40000, 40000, 30000, 30000, 30000, 30000],
+            actual: [25000, 35000]
+        },
+        profit: {
+            goal:   [30000, 30000, 30000, 30000, 35000, 40000, 40000, 40000, 30000, 30000, 30000, 30000],
+            actual: [25000, 35000]
+        }
+    }
+};
+
 // ==================== DATA LAYER ====================
 const DEFAULT_DATA = {
     companies: [
@@ -979,10 +1245,199 @@ let appData = loadData();
 
 function render() {
     renderDate();
+    renderFinancialOverview();
     renderCompanies();
     renderTasks();
     renderCookies();
+    renderCookieOfTheDay();
     renderSettings();
+}
+
+function formatMoney(n) {
+    if (Math.abs(n) >= 1000000) return (n < 0 ? '-' : '') + '$' + (Math.abs(n) / 1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1000) return (n < 0 ? '-' : '') + '$' + (Math.abs(n) / 1000).toFixed(0) + 'K';
+    return '$' + n.toLocaleString();
+}
+
+function renderFinancialOverview() {
+    const fd = FINANCIAL_DATA;
+    const companies = [
+        { key: 'woodchuck', name: 'Woodchuck', hasRevenue: true },
+        { key: 'natureLink', name: 'Nature Link', hasRevenue: true },
+        { key: 'workbench', name: 'Workbench Studios', hasRevenue: false }
+    ];
+
+    const container = document.getElementById('financialCards');
+    if (!container) return;
+
+    container.innerHTML = companies.map(co => {
+        const data = fd[co.key];
+        const monthsReported = data.profit.actual.length;
+
+        // YTD actuals and goals (only through months reported)
+        const revActual = co.hasRevenue ? data.revenue.actual.reduce((a, b) => a + b, 0) : 0;
+        const revGoal = co.hasRevenue ? data.revenue.goal.slice(0, monthsReported).reduce((a, b) => a + b, 0) : 0;
+        const profActual = data.profit.actual.reduce((a, b) => a + b, 0);
+        const profGoal = data.profit.goal.slice(0, monthsReported).reduce((a, b) => a + b, 0);
+
+        const revPct = revGoal !== 0 ? Math.round((revActual / revGoal) * 100) : 0;
+        const profPct = profGoal !== 0 ? Math.round((profActual / profGoal) * 100) : 0;
+
+        let html = `<div class="fin-card"><div class="fin-card-title">${co.name}</div>`;
+
+        if (co.hasRevenue) {
+            const revAhead = revActual >= revGoal;
+            html += `
+                <div class="fin-metric">
+                    <div class="fin-metric-label">Revenue YTD</div>
+                    <div class="fin-metric-row">
+                        <div><span class="fin-metric-value">${formatMoney(revActual)}</span> <span class="fin-metric-goal">/ ${formatMoney(revGoal)} goal</span></div>
+                        <div class="fin-metric-pct ${revAhead ? 'ahead' : 'behind'}">${revPct}%</div>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill ${revAhead ? 'ahead' : 'behind'}" style="width: ${Math.min(revPct, 100)}%"></div></div>
+                </div>`;
+        }
+
+        const profAhead = profActual >= profGoal;
+        html += `
+            <div class="fin-metric">
+                <div class="fin-metric-label">Profit YTD</div>
+                <div class="fin-metric-row">
+                    <div><span class="fin-metric-value">${formatMoney(profActual)}</span> <span class="fin-metric-goal">/ ${formatMoney(profGoal)} goal</span></div>
+                    <div class="fin-metric-pct ${profAhead ? 'ahead' : 'behind'}">${profPct}%</div>
+                </div>
+                <div class="progress-bar"><div class="progress-fill ${profAhead ? 'ahead' : 'behind'}" style="width: ${Math.min(Math.max(profPct, 0), 100)}%"></div></div>
+            </div>`;
+
+        html += `</div>`;
+        return html;
+    }).join('');
+
+    renderRollupChart();
+}
+
+let rollupChartInstance = null;
+function renderRollupChart() {
+    const fd = FINANCIAL_DATA;
+    const canvas = document.getElementById('rollupChart');
+    if (!canvas) return;
+
+    // Find how many months have actual data (use max across companies)
+    const monthsReported = Math.max(
+        fd.woodchuck.revenue.actual.length,
+        fd.natureLink.revenue.actual.length,
+        fd.workbench.profit.actual.length
+    );
+
+    // Build cumulative rollup arrays
+    const cumRevGoal = [], cumRevActual = [], cumProfGoal = [], cumProfActual = [];
+    let rg = 0, ra = 0, pg = 0, pa = 0;
+
+    for (let i = 0; i < 12; i++) {
+        rg += fd.woodchuck.revenue.goal[i] + fd.natureLink.revenue.goal[i] + fd.workbench.revenue.goal[i];
+        pg += fd.woodchuck.profit.goal[i] + fd.natureLink.profit.goal[i] + fd.workbench.profit.goal[i];
+        cumRevGoal.push(rg);
+        cumProfGoal.push(pg);
+
+        if (i < monthsReported) {
+            ra += (fd.woodchuck.revenue.actual[i] || 0) + (fd.natureLink.revenue.actual[i] || 0) + (fd.workbench.revenue.actual[i] || 0);
+            pa += (fd.woodchuck.profit.actual[i] || 0) + (fd.natureLink.profit.actual[i] || 0) + (fd.workbench.profit.actual[i] || 0);
+            cumRevActual.push(ra);
+            cumProfActual.push(pa);
+        }
+    }
+
+    if (rollupChartInstance) rollupChartInstance.destroy();
+
+    rollupChartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: fd.months,
+            datasets: [
+                {
+                    label: 'Revenue Goal',
+                    data: cumRevGoal,
+                    borderColor: '#d4a017',
+                    borderDash: [6, 4],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Revenue Actual',
+                    data: [...cumRevActual, ...Array(12 - cumRevActual.length).fill(null)],
+                    borderColor: '#b8860b',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#b8860b',
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Profit Goal',
+                    data: cumProfGoal,
+                    borderColor: '#86efac',
+                    borderDash: [6, 4],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    tension: 0.3,
+                    fill: false
+                },
+                {
+                    label: 'Profit Actual',
+                    data: [...cumProfActual, ...Array(12 - cumProfActual.length).fill(null)],
+                    borderColor: '#059669',
+                    borderWidth: 3,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#059669',
+                    tension: 0.3,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 12 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            const v = ctx.parsed.y;
+                            if (v === null) return null;
+                            return ctx.dataset.label + ': ' + (v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : '$' + (v/1000).toFixed(0) + 'K');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    ticks: {
+                        callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : '$' + (v/1000).toFixed(0) + 'K',
+                        font: { family: 'Inter', size: 11 }
+                    },
+                    grid: { color: '#f1f5f9' }
+                },
+                x: {
+                    ticks: { font: { family: 'Inter', size: 11 } },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+}
+
+function renderCookieOfTheDay() {
+    const cookies = appData.cookies;
+    if (!cookies || cookies.length === 0) return;
+    const randomIndex = Math.floor(Math.random() * cookies.length);
+    const el = document.getElementById('cookieOfTheDay');
+    if (el) el.textContent = cookies[randomIndex];
 }
 
 function renderDate() {
