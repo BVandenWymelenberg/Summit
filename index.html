@@ -774,8 +774,12 @@
                 <!-- Populated by JS -->
             </div>
             <div class="chart-container">
-                <div class="chart-title">Cumulative Revenue &amp; Profit — All Companies</div>
-                <canvas id="rollupChart"></canvas>
+                <div class="chart-title">Cumulative Revenue — All Companies</div>
+                <canvas id="revenueChart"></canvas>
+            </div>
+            <div class="chart-container" style="height: 300px;">
+                <div class="chart-title">Cumulative Profit — All Companies</div>
+                <canvas id="profitChart"></canvas>
             </div>
 
             <!-- Companies -->
@@ -1313,32 +1317,27 @@ function renderFinancialOverview() {
         return html;
     }).join('');
 
-    renderRollupChart();
+    renderRevenueChart();
+    renderProfitChart();
 }
 
-let rollupChartInstance = null;
-function renderRollupChart() {
-    const fd = FINANCIAL_DATA;
-    const canvas = document.getElementById('rollupChart');
-    if (!canvas) return;
+let revenueChartInstance = null;
+let profitChartInstance = null;
 
-    // Find how many months have actual data (use max across companies)
+function buildCumulativeData() {
+    const fd = FINANCIAL_DATA;
     const monthsReported = Math.max(
         fd.woodchuck.revenue.actual.length,
         fd.natureLink.revenue.actual.length,
         fd.workbench.profit.actual.length
     );
-
-    // Build cumulative rollup arrays
     const cumRevGoal = [], cumRevActual = [], cumProfGoal = [], cumProfActual = [];
     let rg = 0, ra = 0, pg = 0, pa = 0;
-
     for (let i = 0; i < 12; i++) {
         rg += fd.woodchuck.revenue.goal[i] + fd.natureLink.revenue.goal[i] + fd.workbench.revenue.goal[i];
         pg += fd.woodchuck.profit.goal[i] + fd.natureLink.profit.goal[i] + fd.workbench.profit.goal[i];
         cumRevGoal.push(rg);
         cumProfGoal.push(pg);
-
         if (i < monthsReported) {
             ra += (fd.woodchuck.revenue.actual[i] || 0) + (fd.natureLink.revenue.actual[i] || 0) + (fd.workbench.revenue.actual[i] || 0);
             pa += (fd.woodchuck.profit.actual[i] || 0) + (fd.natureLink.profit.actual[i] || 0) + (fd.workbench.profit.actual[i] || 0);
@@ -1346,10 +1345,24 @@ function renderRollupChart() {
             cumProfActual.push(pa);
         }
     }
+    return { cumRevGoal, cumRevActual, cumProfGoal, cumProfActual, monthsReported };
+}
 
-    if (rollupChartInstance) rollupChartInstance.destroy();
+const moneyTickCallback = v => Math.abs(v) >= 1000000 ? (v < 0 ? '-' : '') + '$' + (Math.abs(v)/1000000).toFixed(1) + 'M' : (v < 0 ? '-' : '') + '$' + (Math.abs(v)/1000).toFixed(0) + 'K';
+const moneyTooltip = function(ctx) {
+    const v = ctx.parsed.y;
+    if (v === null) return null;
+    return ctx.dataset.label + ': ' + (Math.abs(v) >= 1000000 ? (v < 0 ? '-' : '') + '$' + (Math.abs(v)/1000000).toFixed(1) + 'M' : (v < 0 ? '-' : '') + '$' + (Math.abs(v)/1000).toFixed(0) + 'K');
+};
 
-    rollupChartInstance = new Chart(canvas, {
+function renderRevenueChart() {
+    const fd = FINANCIAL_DATA;
+    const canvas = document.getElementById('revenueChart');
+    if (!canvas) return;
+    const { cumRevGoal, cumRevActual } = buildCumulativeData();
+
+    if (revenueChartInstance) revenueChartInstance.destroy();
+    revenueChartInstance = new Chart(canvas, {
         type: 'line',
         data: {
             labels: fd.months,
@@ -1373,7 +1386,46 @@ function renderRollupChart() {
                     pointBackgroundColor: '#b8860b',
                     tension: 0.3,
                     fill: false
-                },
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 11 } } },
+                tooltip: { callbacks: { label: moneyTooltip } }
+            },
+            scales: {
+                y: { ticks: { callback: moneyTickCallback, font: { family: 'Inter', size: 11 } }, grid: { color: '#f1f5f9' } },
+                x: { ticks: { font: { family: 'Inter', size: 11 } }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+function renderProfitChart() {
+    const fd = FINANCIAL_DATA;
+    const canvas = document.getElementById('profitChart');
+    if (!canvas) return;
+    const { cumRevActual, cumProfGoal, cumProfActual, monthsReported } = buildCumulativeData();
+
+    // Build profit margin % labels for each month with actual data
+    const profitMarginLabels = fd.months.map((m, i) => {
+        if (i < cumProfActual.length && i < cumRevActual.length && cumRevActual[i] !== 0) {
+            const pct = ((cumProfActual[i] / cumRevActual[i]) * 100).toFixed(1);
+            return m + '\n' + pct + '%';
+        }
+        return m;
+    });
+
+    if (profitChartInstance) profitChartInstance.destroy();
+    profitChartInstance = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: profitMarginLabels,
+            datasets: [
                 {
                     label: 'Profit Goal',
                     data: cumProfGoal,
@@ -1401,30 +1453,36 @@ function renderRollupChart() {
             maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
             plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 12 } }
-                },
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20, font: { family: 'Inter', size: 11 } } },
                 tooltip: {
                     callbacks: {
-                        label: function(ctx) {
-                            const v = ctx.parsed.y;
-                            if (v === null) return null;
-                            return ctx.dataset.label + ': ' + (v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : '$' + (v/1000).toFixed(0) + 'K');
+                        label: moneyTooltip,
+                        afterBody: function(ctx) {
+                            const i = ctx[0].dataIndex;
+                            if (i < cumProfActual.length && i < cumRevActual.length && cumRevActual[i] !== 0) {
+                                return 'Profit Margin: ' + ((cumProfActual[i] / cumRevActual[i]) * 100).toFixed(1) + '%';
+                            }
+                            return '';
                         }
                     }
                 }
             },
             scales: {
-                y: {
-                    ticks: {
-                        callback: v => v >= 1000000 ? '$' + (v/1000000).toFixed(1) + 'M' : '$' + (v/1000).toFixed(0) + 'K',
-                        font: { family: 'Inter', size: 11 }
-                    },
-                    grid: { color: '#f1f5f9' }
-                },
+                y: { ticks: { callback: moneyTickCallback, font: { family: 'Inter', size: 11 } }, grid: { color: '#f1f5f9' } },
                 x: {
-                    ticks: { font: { family: 'Inter', size: 11 } },
+                    ticks: {
+                        font: { family: 'Inter', size: 10 },
+                        maxRotation: 0,
+                        callback: function(value, index) {
+                            const label = this.getLabelForValue(index);
+                            return label.split('\n');
+                        },
+                        color: function(ctx) {
+                            const label = ctx.tick.label;
+                            if (Array.isArray(label) && label.length > 1) return ['#334155', '#059669'];
+                            return '#334155';
+                        }
+                    },
                     grid: { display: false }
                 }
             }
