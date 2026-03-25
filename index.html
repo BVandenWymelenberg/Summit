@@ -946,11 +946,12 @@ async function fetchSheetData() {
         const csv = await resp.text();
         const rows = csv.split('\n').map(r => parseCSVRow(r));
 
-        // Helper: extract 12 monthly values from columns B-M (index 1-12)
+        // Helper: extract 12 monthly values from columns C-N (index 2-13)
+        // Col 0 = empty, Col 1 = label, Col 2 = Jan, Col 3 = Feb, ... Col 13 = Dec
         function getMonthlyValues(rowIdx) {
             if (!rows[rowIdx]) return [];
             const vals = [];
-            for (let c = 1; c <= 12; c++) {
+            for (let c = 2; c <= 13; c++) {
                 const v = parseSheetValue(rows[rowIdx][c]);
                 vals.push(v);
             }
@@ -958,13 +959,12 @@ async function fetchSheetData() {
         }
 
         // Helper: get only months with actual data
-        // Checks the raw CSV cell — empty string means no data yet
         function getActualValues(rowIdx) {
             if (!rows[rowIdx]) return [];
             const vals = [];
-            for (let c = 1; c <= 12; c++) {
+            for (let c = 2; c <= 13; c++) {
                 const raw = (rows[rowIdx][c] || '').replace(/["\s]/g, '');
-                if (raw === '') break; // empty cell = no data for this month yet
+                if (raw === '') break;
                 vals.push(parseSheetValue(rows[rowIdx][c]));
             }
             return vals;
@@ -1014,12 +1014,12 @@ const FINANCIAL_DATA = {
     months: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
     woodchuck: {
         revenue: {
-            goal:   [275000, 275000, 275000, 269000, 269000, 269000, 269000, 352000, 352000, 352000, 352000, 352000],
-            actual: [297000, 429000]
+            goal:   [275000, 275000, 275000, 269000, 269000, 269000, 269000, 352000, 352000, 400000, 400000, 300000],
+            actual: [297000, 429000, 550000]
         },
         profit: {
-            goal:   [21170, 21170, 21170, 19875, 19875, 19875, 21475, 74925, 74695, 74695, 74695, 74695],
-            actual: [39000, 89000]
+            goal:   [21170, 21170, 21170, 19875, 19875, 19875, 21475, 74925, 74695, 105745, 106225, 41525],
+            actual: [39000, 89000, 150000]
         }
     },
     natureLink: {
@@ -1035,11 +1035,11 @@ const FINANCIAL_DATA = {
     workbench: {
         revenue: {
             goal:   [30000, 30000, 30000, 30000, 35000, 40000, 40000, 40000, 30000, 30000, 30000, 30000],
-            actual: [25000, 35000]
+            actual: [25000, 35000, 35000]
         },
         profit: {
             goal:   [30000, 30000, 30000, 30000, 35000, 40000, 40000, 40000, 30000, 30000, 30000, 30000],
-            actual: [25000, 35000]
+            actual: [25000, 35000, 35000]
         }
     }
 };
