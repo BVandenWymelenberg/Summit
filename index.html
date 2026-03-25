@@ -216,7 +216,23 @@
             letter-spacing: 1.5px;
             margin-bottom: 10px;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
+
+        .add-role-btn {
+            font-size: 0.75rem;
+            color: var(--gold);
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0;
+            text-transform: none;
+            padding: 2px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .add-role-btn:hover { background: var(--gold-bg); }
 
         .core-role {
             display: flex;
@@ -227,6 +243,30 @@
         }
 
         .core-role:last-child { border-bottom: none; }
+
+        .remove-role-btn {
+            font-size: 0.7rem;
+            color: var(--slate-300);
+            cursor: pointer;
+            margin-left: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            transition: color 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+        .remove-role-btn:hover { color: var(--red); background: var(--red-bg); }
+
+        .add-role-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--gold-border);
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            margin-top: 6px;
+        }
+        .add-role-input:focus { box-shadow: 0 0 0 3px rgba(184,134,11,0.15); }
 
         .core-role-name {
             font-size: 0.9rem;
@@ -1515,13 +1555,20 @@ function renderCompanies() {
                 </div>
             </div>
             <div class="company-body">
-                <div class="core-roles-label">Core Roles</div>
-                ${c.roles.map(r => `
+                <div class="core-roles-label">
+                    <span>Core Roles</span>
+                    <span class="add-role-btn" onclick="showAddRole('${c.id}')">+ Add</span>
+                </div>
+                ${c.roles.map((r, ri) => `
                     <div class="core-role">
                         <span class="core-role-name">${r.name}</span>
-                        <span class="core-role-score score-${r.score}">${r.score === 'high' ? 'Strong' : r.score === 'mid' ? 'Building' : 'Needs Work'}</span>
+                        <span style="display:flex;align-items:center;">
+                            <span class="core-role-score score-${r.score}">${r.score === 'high' ? 'Strong' : r.score === 'mid' ? 'Building' : 'Needs Work'}</span>
+                            <span class="remove-role-btn" onclick="removeRole('${c.id}', ${ri})" title="Remove role">✕</span>
+                        </span>
                     </div>
                 `).join('')}
+                <div id="addRole-${c.id}" style="display:none;"></div>
             </div>
             <div class="company-footer">
                 <div class="today-focus">
@@ -1616,6 +1663,33 @@ function cycleScore(el) {
 function updateStatus(companyId, status) {
     const company = appData.companies.find(c => c.id === companyId);
     if (company) { company.status = status; saveData(appData); render(); }
+}
+
+function showAddRole(companyId) {
+    const container = document.getElementById('addRole-' + companyId);
+    if (container.style.display !== 'none') { container.style.display = 'none'; return; }
+    container.style.display = 'block';
+    container.innerHTML = '<input class="add-role-input" type="text" placeholder="New core role name..." onkeydown="if(event.key===\'Enter\')addRole(\'' + companyId + '\', this.value)">';
+    container.querySelector('input').focus();
+}
+
+function addRole(companyId, name) {
+    if (!name.trim()) return;
+    const company = appData.companies.find(c => c.id === companyId);
+    if (company) {
+        company.roles.push({ name: name.trim(), score: 'mid' });
+        saveData(appData);
+        renderCompanies();
+    }
+}
+
+function removeRole(companyId, roleIndex) {
+    const company = appData.companies.find(c => c.id === companyId);
+    if (company && company.roles.length > 1) {
+        company.roles.splice(roleIndex, 1);
+        saveData(appData);
+        renderCompanies();
+    }
 }
 
 // ==================== MODALS ====================
