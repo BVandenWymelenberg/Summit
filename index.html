@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summit - CEO Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #b8860b;
+            --gold-light: #d4a017;
+            --gold-bg: #fffbeb;
+            --gold-border: #f59e0b;
+            --slate-900: #0f172a;
+            --slate-700: #334155;
+            --slate-500: #64748b;
+            --slate-300: #cbd5e1;
+            --slate-200: #e2e8f0;
+            --slate-100: #f1f5f9;
+            --slate-50: #f8fafc;
+            --white: #ffffff;
+            --green: #059669;
+            --green-bg: #ecfdf5;
+            --red: #dc2626;
+            --red-bg: #fef2f2;
+            --blue: #2563eb;
+            --blue-bg: #eff6ff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%);
+            min-height: 100vh;
+            color: var(--slate-900);
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: var(--white);
+            padding: 0 20px;
+            border-bottom: 1px solid var(--slate-200);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-tab {
+            padding: 16px 24px;
+            color: var(--slate-500);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .nav-tab:hover { color: var(--slate-900); }
+        .nav-tab.active { color: var(--slate-900); border-bottom-color: var(--gold); }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+
+        /* Header */
+        header { text-align: center; padding: 40px 0 20px; }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 300;
+            letter-spacing: 8px;
+            text-transform: uppercase;
+            color: var(--slate-900);
+        }
+
+        h1 span { font-weight: 600; }
+
+        .subtitle {
+            color: var(--slate-500);
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .date-display {
+            color: var(--slate-500);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            margin-top: 12px;
+        }
+
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Daily Prompt Banner */
+        .daily-prompt {
+            background: linear-gradient(135deg, var(--slate-900) 0%, #1e293b 100%);
+            border-radius: 16px;
+            padding: 32px 40px;
+            margin-bottom: 32px;
+            color: var(--white);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .daily-prompt::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 200px; height: 100%;
+            background: linear-gradient(135deg, transparent, rgba(184,134,11,0.15));
+        }
+
+        .daily-prompt-label {
+            font-size: 0.7rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .daily-prompt-text {
+            font-size: 1.3rem;
+            font-weight: 300;
+            line-height: 1.6;
+            max-width: 800px;
+        }
+
+        .daily-prompt-action {
+            margin-top: 16px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--gold-light);
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            font-weight: 600;
+            transition: gap 0.2s;
+        }
+
+        .daily-prompt-action:hover { gap: 12px; }
+
+        /* Section Title */
+        .section-title {
+            font-size: 0.75rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        /* Company Cards Row */
+        .companies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .company-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--slate-200);
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        .company-card:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
+        }
+
+        .company-header {
+            padding: 24px 28px 16px;
+            border-bottom: 1px solid var(--slate-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .company-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--slate-900);
+            letter-spacing: 0.5px;
+        }
+
+        .company-status {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .status-on-track { background: var(--green-bg); color: var(--green); }
+        .status-attention { background: var(--gold-bg); color: var(--gold); }
+        .status-critical { background: var(--red-bg); color: var(--red); }
+
+        .company-body { padding: 20px 28px 24px; }
+
+        .core-roles-label {
+            font-size: 0.65rem;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .core-role {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--slate-100);
+        }
+
+        .core-role:last-child { border-bottom: none; }
+
+        .core-role-name {
+            font-size: 0.9rem;
+            color: var(--slate-700);
+            font-weight: 500;
+        }
+
+        .core-role-score {
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 2px 10px;
+            border-radius: 12px;
+        }
+
+        .score-high { background: var(--green-bg); color: var(--green); }
+        .score-mid { background: var(--gold-bg); color: var(--gold); }
+        .score-low { background: var(--red-bg); color: var(--red); }
+
+        .company-footer {
+            padding: 16px 28px;
+            background: var(--slate-50);
+            border-top: 1px solid var(--slate-100);
+        }
+
+        .today-focus {
+            font-size: 0.8rem;
+            color: var(--slate-700);
+            line-height: 1.5;
+        }
+
+        .today-focus strong {
+            color: var(--gold);
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* Only I Can Do Section */
+        .only-i-section {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--slate-200);
+            padding: 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+
+        .only-i-list { list-style: none; }
+
+        .only-i-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--slate-100);
+        }
+
+        .only-i-item:last-child { border-bottom: none; }
+
+        .only-i-checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--slate-300);
+            border-radius: 6px;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-top: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .only-i-checkbox.checked {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .only-i-checkbox.checked::after {
+            content: '';
+            width: 6px;
+            height: 10px;
+            border: 2px solid white;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+            margin-top: -2px;
+        }
+
+        .only-i-text {
+            font-size: 0.95rem;
+            color: var(--slate-700);
+            line-height: 1.5;
+        }
+
+        .only-i-text.completed {
+            text-decoration: line-through;
+            color: var(--slate-300);
+        }
+
+        .only-i-company {
+            font-size: 0.65rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Cookie Jar Section */
+        .cookie-jar {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid var(--gold-border);
+            border-radius: 16px;
+            padding: 28px;
+            margin-bottom: 32px;
+            box-shadow: 0 4px 16px rgba(184,134,11,0.08);
+        }
+
+        .cookie-item {
+            background: var(--white);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(184,134,11,0.15);
+            font-size: 0.9rem;
+            color: var(--slate-700);
+            line-height: 1.5;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cookie-item:hover {
+            border-color: var(--gold);
+            box-shadow: 0 2px 8px rgba(184,134,11,0.12);
+        }
+
+        .cookie-item:last-child { margin-bottom: 0; }
+
+        /* Scorecard Section */
+        .scorecard-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .score-card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--slate-200);
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+
+        .score-card-label {
+            font-size: 0.65rem;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .score-card-value {
+            font-size: 2.4rem;
+            font-weight: 300;
+            color: var(--slate-900);
+        }
+
+        .score-card-sub {
+            font-size: 0.75rem;
+            color: var(--green);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        .score-card-sub.down { color: var(--red); }
+
+        /* Add Company / Role Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(15,23,42,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 36px;
+            width: 500px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .modal h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--slate-900);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-label {
+            display: block;
+            font-size: 0.7rem;
+            color: var(--slate-500);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 10px;
+            border: 1px solid var(--slate-200);
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            color: var(--slate-900);
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 0 3px rgba(184,134,11,0.15);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-gold {
+            background: linear-gradient(135deg, var(--gold), var(--gold-light));
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(184,134,11,0.3);
+        }
+
+        .btn-gold:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(184,134,11,0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--slate-200);
+            color: var(--slate-500);
+        }
+
+        .btn-outline:hover { border-color: var(--slate-300); color: var(--slate-700); }
+
+        .btn-row { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+
+        /* Add buttons */
+        .add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px dashed var(--slate-300);
+            background: transparent;
+            color: var(--slate-500);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: var(--gold-bg);
+        }
+
+        /* Mindset Shift Banner */
+        .mindset-banner {
+            background: var(--white);
+            border: 1px solid var(--slate-200);
+            border-left: 4px solid var(--gold);
+            border-radius: 0 16px 16px 0;
+            padding: 24px 28px;
+            margin-bottom: 32px;
+        }
+
+        .mindset-label {
+            font-size: 0.65rem;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .mindset-text {
+            font-size: 1rem;
+            color: var(--slate-700);
+            line-height: 1.6;
+        }
+
+        .mindset-columns {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            margin-top: 16px;
+            align-items: start;
+        }
+
+        .mindset-col h4 {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .mindset-col.from h4 { color: var(--red); }
+        .mindset-col.to h4 { color: var(--green); }
+
+        .mindset-arrow {
+            color: var(--slate-300);
+            font-size: 1.5rem;
+            padding-top: 20px;
+        }
+
+        .mindset-col ul {
+            list-style: none;
+            font-size: 0.85rem;
+            color: var(--slate-500);
+            line-height: 1.8;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .companies-grid { grid-template-columns: 1fr; }
+            .scorecard-grid { grid-template-columns: repeat(2, 1fr); }
+            h1 { font-size: 2rem; letter-spacing: 4px; }
+            .mindset-columns { grid-template-columns: 1fr; }
+            .mindset-arrow { display: none; }
+        }
+
+        @media (max-width: 600px) {
+            .scorecard-grid { grid-template-columns: 1fr; }
+            .container { padding: 16px; }
+            .nav-tab { padding: 12px 16px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+        <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
+        <div class="nav-tab" data-tab="scorecard">Scorecard</div>
+        <div class="nav-tab" data-tab="cookiejar">Cookie Jar</div>
+        <div class="nav-tab" data-tab="settings">Settings</div>
+    </nav>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>S<span>ummit</span></h1>
+            <div class="subtitle">CEO Command Center</div>
+            <div class="date-display" id="dateDisplay"></div>
+        </header>
+
+        <!-- ==================== DASHBOARD TAB ==================== -->
+        <div class="tab-content active" id="tab-dashboard">
+
+            <!-- Daily Prompt -->
+            <div class="daily-prompt" id="dailyPrompt">
+                <div class="daily-prompt-label">Today's Focus Prompt</div>
+                <div class="daily-prompt-text" id="dailyPromptText">
+                    What is the one thing only YOU can do today that moves the $100M vision forward?
+                </div>
+                <div class="daily-prompt-action" onclick="refreshPrompt()">
+                    New prompt &rarr;
+                </div>
+            </div>
+
+            <!-- Mindset Shift -->
+            <div class="mindset-banner">
+                <div class="mindset-label">The Shift</div>
+                <div class="mindset-text">
+                    This season is a measure of success. You are no longer the one answering 20 questions a day.
+                    You GET TO focus on your core roles. Score your value differently now.
+                </div>
+                <div class="mindset-columns">
+                    <div class="mindset-col from">
+                        <h4>Letting go of</h4>
+                        <ul>
+                            <li>Knocking down walls</li>
+                            <li>Crossing off lists</li>
+                            <li>Solving every problem</li>
+                            <li>Finding stuff to do</li>
+                        </ul>
+                    </div>
+                    <div class="mindset-arrow">&rarr;</div>
+                    <div class="mindset-col to">
+                        <h4>Stepping into</h4>
+                        <ul>
+                            <li>Process</li>
+                            <li>People</li>
+                            <li>Systems</li>
+                            <li>$100M Vision</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Companies -->
+            <div class="section-title">Your Organizations</div>
+            <div class="companies-grid" id="companiesGrid">
+                <!-- Populated by JS -->
+            </div>
+            <button class="add-btn" onclick="openModal('company')">+ Add Organization</button>
+
+            <!-- Only I Can Do -->
+            <div style="margin-top: 32px;">
+                <div class="section-title">Only I Can Do &mdash; Today</div>
+                <div class="only-i-section">
+                    <ul class="only-i-list" id="onlyIList">
+                        <!-- Populated by JS -->
+                    </ul>
+                    <button class="add-btn" style="margin-top: 16px;" onclick="openModal('task')">+ Add Task</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== SCORECARD TAB ==================== -->
+        <div class="tab-content" id="tab-scorecard">
+            <div class="section-title">Weekly CEO Scorecard</div>
+            <div class="scorecard-grid">
+                <div class="score-card">
+                    <div class="score-card-label">Hours on Core Roles</div>
+                    <div class="score-card-value" id="coreHours">32</div>
+                    <div class="score-card-sub">+8% vs last week</div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">Tasks Delegated</div>
+                    <div class="score-card-value" id="delegated">14</div>
+                    <div class="score-card-sub">+3 vs last week</div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">"Only I" Completions</div>
+                    <div class="score-card-value" id="onlyICount">6</div>
+                    <div class="score-card-sub">of 8 this week</div>
+                </div>
+                <div class="score-card">
+                    <div class="score-card-label">Fires Avoided</div>
+                    <div class="score-card-value" id="firesAvoided">3</div>
+                    <div class="score-card-sub">Stayed in your lane</div>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top: 32px;">Score Your Value This Week</div>
+            <div class="only-i-section">
+                <p style="font-size: 0.9rem; color: var(--slate-500); line-height: 1.6; margin-bottom: 20px;">
+                    Rate yourself honestly. The old scorecard (problems solved, fires put out, things crossed off) doesn't apply anymore.
+                    Your new value is measured in process built, people developed, and systems created.
+                </p>
+                <div class="core-role" style="padding: 14px 0;">
+                    <span class="core-role-name">Did I stay focused on CEO-level work?</span>
+                    <span class="core-role-score score-high" style="cursor:pointer;" onclick="cycleScore(this)">Yes</span>
+                </div>
+                <div class="core-role" style="padding: 14px 0;">
+                    <span class="core-role-name">Did I delegate instead of doing?</span>
+                    <span class="core-role-score score-mid" style="cursor:pointer;" onclick="cycleScore(this)">Mostly</span>
+                </div>
+                <div class="core-role" style="padding: 14px 0;">
+                    <span class="core-role-name">Did I build process / people / systems?</span>
+                    <span class="core-role-score score-high" style="cursor:pointer;" onclick="cycleScore(this)">Yes</span>
+                </div>
+                <div class="core-role" style="padding: 14px 0;">
+                    <span class="core-role-name">Did I avoid "finding stuff to do"?</span>
+                    <span class="core-role-score score-mid" style="cursor:pointer;" onclick="cycleScore(this)">Mostly</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== COOKIE JAR TAB ==================== -->
+        <div class="tab-content" id="tab-cookiejar">
+            <div class="section-title">Your Cookie Jar</div>
+            <p style="font-size: 0.9rem; color: var(--slate-500); line-height: 1.6; margin-bottom: 24px; max-width: 700px;">
+                When the weight gets heavy, reach in. These are proof that you've done harder things before.
+                You are stronger than your current struggle.
+            </p>
+            <div class="cookie-jar" id="cookieJar">
+                <!-- Populated by JS -->
+            </div>
+            <button class="add-btn" onclick="openModal('cookie')">+ Add a Cookie</button>
+        </div>
+
+        <!-- ==================== SETTINGS TAB ==================== -->
+        <div class="tab-content" id="tab-settings">
+            <div class="section-title">Organizations &amp; Core Roles</div>
+            <div class="only-i-section" id="settingsCompanies">
+                <!-- Populated by JS -->
+            </div>
+            <button class="add-btn" style="margin-top: 16px;" onclick="openModal('company')">+ Add Organization</button>
+
+            <div style="margin-top: 32px;">
+                <div class="section-title">Data</div>
+                <div class="only-i-section">
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-outline" onclick="exportData()">Export Data</button>
+                        <button class="btn btn-outline" onclick="document.getElementById('importFile').click()">Import Data</button>
+                        <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importData(event)">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <h2 id="modalTitle">Add</h2>
+            <div id="modalBody"></div>
+            <div class="btn-row">
+                <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-gold" id="modalSave" onclick="saveModal()">Save</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==================== DATA LAYER ====================
+const DEFAULT_DATA = {
+    companies: [
+        {
+            id: 'woodchuck',
+            name: 'Woodchuck',
+            status: 'on-track',
+            roles: [
+                { name: 'Driving Strategic Revenue', score: 'high' },
+                { name: 'Vision & Mission', score: 'high' },
+                { name: 'Banking Relationships', score: 'mid' },
+                { name: 'Profit & Gross Margin', score: 'mid' },
+                { name: 'Culture', score: 'high' },
+                { name: 'Financing', score: 'mid' },
+                { name: 'Tenant Management', score: 'mid' }
+            ],
+            todayFocus: 'Focus on strategic revenue drivers — not operational tasks.'
+        },
+        {
+            id: 'naturelink',
+            name: 'Nature Link',
+            status: 'attention',
+            roles: [
+                { name: 'LMA of GMs', score: 'mid' },
+                { name: 'Quarterly Investor Updates', score: 'mid' },
+                { name: 'Research & Develop New Properties', score: 'high' },
+                { name: 'Investor Networking & Relationships', score: 'mid' }
+            ],
+            todayFocus: 'Investor relationship building and new property research.'
+        },
+        {
+            id: 'workbench',
+            name: 'Workbench Studios',
+            status: 'on-track',
+            roles: [
+                { name: 'Revenue', score: 'high' },
+                { name: 'Profit', score: 'mid' }
+            ],
+            todayFocus: 'Review revenue pipeline and margin targets.'
+        }
+    ],
+    tasks: [
+        { id: 1, text: 'Cast vision for Q3 revenue strategy across all three companies', company: 'All', done: false },
+        { id: 2, text: 'Meet with Woodchuck sales lead on pipeline health', company: 'Woodchuck', done: false },
+        { id: 3, text: 'Review Nature Link partnership proposal', company: 'Nature Link', done: false },
+        { id: 4, text: 'Define hiring criteria for Workbench ops role', company: 'Workbench Studios', done: false }
+    ],
+    cookies: [
+        'Built Woodchuck from zero revenue to a thriving business through sheer grit and resourcefulness.',
+        'Led Nature Link through a pivot that everyone doubted — came out stronger on the other side.',
+        'Managed three companies simultaneously while maintaining family as a priority.',
+        'Overcame seasons where cash was tight and still found a way to keep every door open.',
+        'Assembled teams across multiple companies that operate with trust and autonomy.'
+    ],
+    scorecard: {
+        coreHours: 32,
+        delegated: 14,
+        onlyICount: 6,
+        firesAvoided: 3
+    }
+};
+
+const DAILY_PROMPTS = [
+    "What is the one thing only YOU can do today that moves the $100M vision forward?",
+    "Are you building process, developing people, or creating systems right now — or just staying busy?",
+    "If you weren't allowed to solve any problems today, what would you focus on?",
+    "What did you delegate this week that you would have done yourself six months ago?",
+    "Which of your three companies needs your CEO attention (not your labor) most today?",
+    "What's one system you can put in place today so this problem never reaches your desk again?",
+    "Are you scoring your value by the old metric (tasks done) or the new one (vision advanced)?",
+    "Who on your team needs to be developed today so they can carry more tomorrow?",
+    "What would the $100M version of you spend today doing?",
+    "Is today's calendar filled with CEO work — or could anyone with a login do what you have planned?",
+    "What conversation are you avoiding that would unlock the next level for one of your companies?",
+    "If you only had 2 hours today, what would you spend them on? Do that first.",
+    "What's one thing you need to STOP doing to free up space for what only you can do?"
+];
+
+function loadData() {
+    const saved = localStorage.getItem('summit-data');
+    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+
+function saveData(data) {
+    localStorage.setItem('summit-data', JSON.stringify(data));
+}
+
+let appData = loadData();
+
+// ==================== RENDERING ====================
+
+function render() {
+    renderDate();
+    renderCompanies();
+    renderTasks();
+    renderCookies();
+    renderSettings();
+}
+
+function renderDate() {
+    const d = new Date();
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('dateDisplay').textContent = d.toLocaleDateString('en-US', options);
+}
+
+function renderCompanies() {
+    const grid = document.getElementById('companiesGrid');
+    grid.innerHTML = appData.companies.map(c => `
+        <div class="company-card">
+            <div class="company-header">
+                <div class="company-name">${c.name}</div>
+                <div class="company-status status-${c.status === 'on-track' ? 'on-track' : c.status === 'attention' ? 'attention' : 'critical'}">
+                    ${c.status === 'on-track' ? 'On Track' : c.status === 'attention' ? 'Needs Attention' : 'Critical'}
+                </div>
+            </div>
+            <div class="company-body">
+                <div class="core-roles-label">Core Roles</div>
+                ${c.roles.map(r => `
+                    <div class="core-role">
+                        <span class="core-role-name">${r.name}</span>
+                        <span class="core-role-score score-${r.score}">${r.score === 'high' ? 'Strong' : r.score === 'mid' ? 'Building' : 'Needs Work'}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="company-footer">
+                <div class="today-focus">
+                    <strong>Today's CEO Focus</strong>
+                    ${c.todayFocus}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderTasks() {
+    const list = document.getElementById('onlyIList');
+    list.innerHTML = appData.tasks.map(t => `
+        <li class="only-i-item">
+            <div class="only-i-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})"></div>
+            <div>
+                <div class="only-i-text ${t.done ? 'completed' : ''}">${t.text}</div>
+                <div class="only-i-company">${t.company}</div>
+            </div>
+        </li>
+    `).join('');
+}
+
+function renderCookies() {
+    const jar = document.getElementById('cookieJar');
+    jar.innerHTML = appData.cookies.map((c, i) => `
+        <div class="cookie-item" onclick="highlightCookie(this)">${c}</div>
+    `).join('');
+}
+
+function renderSettings() {
+    const el = document.getElementById('settingsCompanies');
+    el.innerHTML = appData.companies.map(c => `
+        <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--slate-100);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <strong style="font-size: 1rem;">${c.name}</strong>
+                <button class="add-btn" onclick="openModal('role', '${c.id}')" style="margin: 0;">+ Add Role</button>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                ${c.roles.map(r => `
+                    <span style="padding: 6px 14px; background: var(--slate-50); border: 1px solid var(--slate-200); border-radius: 8px; font-size: 0.85rem; color: var(--slate-700);">
+                        ${r.name}
+                    </span>
+                `).join('')}
+            </div>
+            <div style="margin-top: 10px;">
+                <select class="form-input" style="width: auto; padding: 8px 12px; font-size: 0.8rem;"
+                    onchange="updateStatus('${c.id}', this.value)">
+                    <option value="on-track" ${c.status === 'on-track' ? 'selected' : ''}>On Track</option>
+                    <option value="attention" ${c.status === 'attention' ? 'selected' : ''}>Needs Attention</option>
+                    <option value="critical" ${c.status === 'critical' ? 'selected' : ''}>Critical</option>
+                </select>
+            </div>
+        </div>
+    `).join('');
+}
+
+// ==================== INTERACTIONS ====================
+
+function toggleTask(id) {
+    const task = appData.tasks.find(t => t.id === id);
+    if (task) { task.done = !task.done; saveData(appData); renderTasks(); }
+}
+
+function refreshPrompt() {
+    const el = document.getElementById('dailyPromptText');
+    const current = el.textContent.trim();
+    let next;
+    do { next = DAILY_PROMPTS[Math.floor(Math.random() * DAILY_PROMPTS.length)]; } while (next === current);
+    el.textContent = next;
+}
+
+function highlightCookie(el) {
+    el.style.borderColor = 'var(--gold)';
+    el.style.background = 'var(--gold-bg)';
+    setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 2000);
+}
+
+function cycleScore(el) {
+    const states = [
+        { text: 'Yes', class: 'score-high' },
+        { text: 'Mostly', class: 'score-mid' },
+        { text: 'No', class: 'score-low' }
+    ];
+    const current = states.findIndex(s => el.textContent.trim() === s.text);
+    const next = states[(current + 1) % states.length];
+    el.textContent = next.text;
+    el.className = 'core-role-score ' + next.class;
+}
+
+function updateStatus(companyId, status) {
+    const company = appData.companies.find(c => c.id === companyId);
+    if (company) { company.status = status; saveData(appData); render(); }
+}
+
+// ==================== MODALS ====================
+
+let modalMode = '';
+let modalContext = '';
+
+function openModal(mode, context) {
+    modalMode = mode;
+    modalContext = context || '';
+    const overlay = document.getElementById('modalOverlay');
+    const title = document.getElementById('modalTitle');
+    const body = document.getElementById('modalBody');
+
+    if (mode === 'company') {
+        title.textContent = 'Add Organization';
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Organization Name</label>
+                <input class="form-input" id="modalInput1" placeholder="e.g. Acme Corp">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Core Roles (comma separated)</label>
+                <input class="form-input" id="modalInput2" placeholder="Revenue Growth, Culture, Systems">
+            </div>
+        `;
+    } else if (mode === 'task') {
+        title.textContent = 'Add "Only I Can Do" Task';
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Task</label>
+                <input class="form-input" id="modalInput1" placeholder="What only you can do...">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Organization</label>
+                <select class="form-input" id="modalInput2">
+                    <option value="All">All</option>
+                    ${appData.companies.map(c => `<option value="${c.name}">${c.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    } else if (mode === 'cookie') {
+        title.textContent = 'Add to Your Cookie Jar';
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">What have you overcome or achieved?</label>
+                <textarea class="form-input" id="modalInput1" rows="3" placeholder="Describe a win, obstacle overcome, or moment of strength..."></textarea>
+            </div>
+        `;
+    } else if (mode === 'role') {
+        const company = appData.companies.find(c => c.id === context);
+        title.textContent = `Add Role to ${company?.name || ''}`;
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Role Name</label>
+                <input class="form-input" id="modalInput1" placeholder="e.g. Strategic Partnerships">
+            </div>
+        `;
+    }
+
+    overlay.classList.add('show');
+    setTimeout(() => document.getElementById('modalInput1')?.focus(), 100);
+}
+
+function closeModal(e) {
+    if (e && e.target !== document.getElementById('modalOverlay')) return;
+    document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function saveModal() {
+    if (modalMode === 'company') {
+        const name = document.getElementById('modalInput1').value.trim();
+        const rolesRaw = document.getElementById('modalInput2').value.trim();
+        if (!name) return;
+        const roles = rolesRaw ? rolesRaw.split(',').map(r => ({ name: r.trim(), score: 'mid' })) : [{ name: 'Revenue Growth', score: 'mid' }];
+        appData.companies.push({
+            id: name.toLowerCase().replace(/\s+/g, '-'),
+            name,
+            status: 'on-track',
+            roles,
+            todayFocus: 'Define your CEO-level focus for this organization.'
+        });
+    } else if (modalMode === 'task') {
+        const text = document.getElementById('modalInput1').value.trim();
+        const company = document.getElementById('modalInput2').value;
+        if (!text) return;
+        const maxId = appData.tasks.reduce((max, t) => Math.max(max, t.id), 0);
+        appData.tasks.push({ id: maxId + 1, text, company, done: false });
+    } else if (modalMode === 'cookie') {
+        const text = document.getElementById('modalInput1').value.trim();
+        if (!text) return;
+        appData.cookies.push(text);
+    } else if (modalMode === 'role') {
+        const name = document.getElementById('modalInput1').value.trim();
+        if (!name) return;
+        const company = appData.companies.find(c => c.id === modalContext);
+        if (company) company.roles.push({ name, score: 'mid' });
+    }
+
+    saveData(appData);
+    render();
+    closeModal();
+}
+
+// ==================== TABS ====================
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// ==================== EXPORT / IMPORT ====================
+
+function exportData() {
+    const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'summit-data.json'; a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            appData = JSON.parse(e.target.result);
+            saveData(appData);
+            render();
+        } catch (err) { alert('Invalid file format.'); }
+    };
+    reader.readAsText(file);
+}
+
+// ==================== INIT ====================
+render();
+</script>
+</body>
+</html>
