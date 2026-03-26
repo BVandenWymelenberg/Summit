@@ -2128,12 +2128,22 @@ function openInGoogleDoc() {
     const content = document.getElementById('generatedPostContent').textContent;
     const p = linkedinPrompts[currentPromptIndex];
     const title = 'LinkedIn Post: ' + p.prompt;
-    // Google Docs create URL with pre-filled title and content
+    // Copy content to clipboard first so user can paste into the doc
+    navigator.clipboard.writeText(content).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 3000);
+    });
+    // Open new Google Doc with title (content is on clipboard, ready to paste)
     const encodedTitle = encodeURIComponent(title);
-    const encodedContent = encodeURIComponent(content);
-    // Open new Google Doc with title
-    const url = `https://docs.google.com/document/create?title=${encodedTitle}&body=${encodedContent}`;
+    const url = `https://docs.google.com/document/create?title=${encodedTitle}`;
     window.open(url, '_blank');
+    // Show a toast notification
+    const toast = document.createElement('div');
+    toast.textContent = '📋 Post copied to clipboard — paste into your new Google Doc with ⌘V';
+    toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#0f172a;color:white;padding:14px 24px;border-radius:10px;font-size:0.9rem;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);animation:fadeIn 0.3s;';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 4000);
 }
 
 renderLinkedInPrompt();
