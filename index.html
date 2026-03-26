@@ -864,6 +864,40 @@
                     <p id="verseReference" style="margin-top: 10px; font-size: 0.85rem; color: var(--slate-500); font-weight: 600; position: relative; z-index: 1;"></p>
                 </div>
             </div>
+
+            <!-- LinkedIn Post Prompt -->
+            <div style="margin-top: 32px;">
+                <div class="section-title" style="display: flex; align-items: center; gap: 8px;">💼 LinkedIn Post Prompt</div>
+                <div id="linkedinPromptCard" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid var(--slate-200); border-radius: 12px; padding: 28px; margin-top: 12px; position: relative; overflow: hidden;">
+                    <div style="position: absolute; top: -15px; right: -5px; font-size: 70px; opacity: 0.05;">✍️</div>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                        <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); font-weight: 600;" id="promptCategory">CATEGORY</span>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="prevPrompt()" style="background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--slate-500); transition: all 0.2s;">←</button>
+                            <button onclick="nextPrompt()" style="background: var(--white); border: 1px solid var(--slate-200); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--slate-500); transition: all 0.2s;">→</button>
+                        </div>
+                    </div>
+                    <p id="linkedinPromptText" style="font-size: 1.15rem; line-height: 1.6; color: var(--slate-900); font-weight: 600; position: relative; z-index: 1; margin-bottom: 8px;"></p>
+                    <p id="linkedinPromptSub" style="font-size: 0.9rem; line-height: 1.5; color: var(--slate-500); position: relative; z-index: 1; margin-bottom: 20px;"></p>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <button onclick="generateLinkedInPost()" style="background: linear-gradient(135deg, #0077b5 0%, #005f8d 100%); color: white; border: none; border-radius: 10px; padding: 12px 24px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 8px rgba(0,119,181,0.3);">
+                            <span style="font-size: 1.1rem;">in</span> Generate Post →
+                        </button>
+                    </div>
+                    <div id="generatedPostArea" style="display: none; margin-top: 20px;">
+                        <div style="background: var(--white); border: 1px solid var(--slate-200); border-radius: 10px; padding: 20px; position: relative;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-size: 0.8rem; color: var(--slate-500); font-weight: 500;">Generated Draft</span>
+                                <div style="display: flex; gap: 8px;">
+                                    <button onclick="copyPost()" id="copyBtn" style="background: var(--slate-100); border: 1px solid var(--slate-200); border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; color: var(--slate-700); font-weight: 500; transition: all 0.2s;">📋 Copy</button>
+                                    <button onclick="openInGoogleDoc()" style="background: linear-gradient(135deg, #4285f4 0%, #3367d6 100%); border: none; border-radius: 8px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; color: white; font-weight: 500; transition: all 0.2s;">📝 Open in Google Doc</button>
+                                </div>
+                            </div>
+                            <div id="generatedPostContent" style="font-size: 0.95rem; line-height: 1.8; color: var(--slate-700); white-space: pre-wrap;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ==================== SCORECARD TAB ==================== -->
@@ -1892,6 +1926,217 @@ function importData(event) {
     };
     reader.readAsText(file);
 }
+
+// ==================== LINKEDIN POST PROMPTS ====================
+
+const linkedinPrompts = [
+    {
+        category: 'US MANUFACTURING',
+        prompt: "Why we still make everything in Minneapolis — and why it matters more now than ever.",
+        sub: "Share the real cost of offshoring vs. keeping jobs local. Talk about what it means when your team can walk the production floor and solve problems in real time. No theory — just what you've seen in 13+ years of domestic manufacturing."
+    },
+    {
+        category: 'US MANUFACTURING',
+        prompt: "The thing nobody tells you about bringing manufacturing back to America.",
+        sub: "Talk about the real challenges — workforce, cost, supply chain — and why you'd still choose domestic production every time. Be honest about the hard parts. Let people see behind the curtain."
+    },
+    {
+        category: 'US MANUFACTURING',
+        prompt: "We planted millions of trees across 6 continents selling wood products made in the USA.",
+        sub: "The story of how 'Nature back to people. Jobs back to America.' became more than a tagline. What sustainability looks like when it's baked into the business model from day one."
+    },
+    {
+        category: 'ENTREPRENEURSHIP',
+        prompt: "I wiped out on Rollerblades, cracked my iPhone, and accidentally started a company.",
+        sub: "Your origin story — but go deeper. Talk about the moment you realized this was real. The first Target order. What it felt like shipping to 1,800 stores as a 22-year-old. The lesson: start before you're ready."
+    },
+    {
+        category: 'ENTREPRENEURSHIP',
+        prompt: "Stop building a business plan. Start building something people want.",
+        sub: "The gap between planning and doing. Most people over-plan and under-execute. Share a specific example where action beat analysis. Tie in your book's core message."
+    },
+    {
+        category: 'ENTREPRENEURSHIP',
+        prompt: "The hardest year of my business nearly broke me. Here's what I learned.",
+        sub: "Pick a real low point — a year where cash was tight, a product failed, or a deal fell through. Be raw. Share what you did differently after. Your Cookie Jar moment."
+    },
+    {
+        category: 'ENTREPRENEURSHIP',
+        prompt: "13 years in and I'm still learning how to be a CEO — not just a founder.",
+        sub: "The shift from doing everything yourself to leading through people, process, and systems. What you're unlearning. What 'scoring your own value' looks like now vs. year one."
+    },
+    {
+        category: 'LUXURY RESORT DEVELOPMENT',
+        prompt: "We built a luxury resort with no TVs in the rooms. On purpose.",
+        sub: "Nature Link's philosophy: disconnect to reconnect. Why the hospitality industry is missing the point. Share a guest story that proves the concept. What happens when people actually look up from their screens."
+    },
+    {
+        category: 'LUXURY RESORT DEVELOPMENT',
+        prompt: "What I learned about hospitality by restoring a 1910 resort in northern Minnesota.",
+        sub: "The history of Clark Lake, the vision for Nature Link, and what it takes to build something that honors the past while creating something new. The intersection of real estate development and intentional design."
+    },
+    {
+        category: 'EMPLOYEE DEVELOPMENT',
+        prompt: "The best investment I've made isn't equipment or real estate — it's my team.",
+        sub: "A specific story about someone on your team who grew beyond what either of you expected. What culture actually looks like in practice, not just on a poster. How you think about developing people across 3 companies."
+    },
+    {
+        category: 'EMPLOYEE DEVELOPMENT',
+        prompt: "I used to solve every problem myself. That was the problem.",
+        sub: "The hardest shift for a founder: letting go. Share a moment where you had to trust your team instead of jumping in. What happened when you stopped being the answer to every question."
+    },
+    {
+        category: 'LEADERSHIP & FAITH',
+        prompt: "Being a CEO and a follower of Christ aren't separate things for me.",
+        sub: "How faith shapes your leadership — not in a preachy way, but in how you treat people, make decisions under pressure, and define success. Be real about the tension between ambition and humility."
+    },
+    {
+        category: 'LEADERSHIP & FAITH',
+        prompt: "The $100M vision means nothing if I'm not the dad and husband I'm supposed to be.",
+        sub: "How you stay grounded across the chaos of running 3 companies. What your kids and wife actually see. The non-negotiables. Why 'winning at home' is the real scoreboard."
+    },
+    {
+        category: 'AI & BUSINESS',
+        prompt: "I'm using Claude Code to run my businesses more effectively. Here's what that actually looks like.",
+        sub: "Practical, no-hype take on AI in everyday business. Show a real example — building dashboards, analyzing data, automating workflows. Not theory. What you actually did this week with AI and what it saved you."
+    },
+    {
+        category: 'AI & BUSINESS',
+        prompt: "Small business owners: you don't need a tech team. You need to learn AI.",
+        sub: "Break down how AI leveled the playing field. Share a specific task that used to take hours that now takes minutes. Encourage other entrepreneurs to stop being intimidated and start experimenting."
+    },
+    {
+        category: 'TAXES & POLICY',
+        prompt: "Let's talk about what taxes actually do to small manufacturers in America.",
+        sub: "Real numbers, real impact. What you see as a business owner trying to keep jobs in the US while competing against offshore operations. Policy matters — share your perspective without being political. Just honest."
+    },
+    {
+        category: 'ADVENTURE & LIFE',
+        prompt: "I've been to all 7 continents. The best lessons I've learned didn't come from a boardroom.",
+        sub: "Pick 2-3 moments from your travels that changed how you think about business, people, or life. The farmer's kid from Minnesota who saw the world and brought those perspectives home."
+    },
+    {
+        category: 'ADVENTURE & LIFE',
+        prompt: "My kids don't need to see a perfect dad. They need to see a present one.",
+        sub: "Balancing adventure, ambition, and showing up. A real moment — a trip, a conversation, a Saturday morning — that reminded you what matters. Authenticity over perfection."
+    },
+    {
+        category: 'ENTREPRENEURSHIP',
+        prompt: "You don't need permission to start. You need to stop waiting for it.",
+        sub: "Your core message distilled. Share the moment you stopped asking 'what if' and started doing. Speak directly to the person who's been sitting on their idea for years. Light the fire."
+    },
+    {
+        category: 'LEADERSHIP & GROWTH',
+        prompt: "The things that got me here won't get me to the next level. And that's terrifying.",
+        sub: "The Season 2 shift — from wall-knocking and list-crossing to process, people, and systems. Be vulnerable about what it feels like to leave behind what made you successful. The new scoreboard."
+    }
+];
+
+let currentPromptIndex = Math.floor(Math.random() * linkedinPrompts.length);
+
+function renderLinkedInPrompt() {
+    const p = linkedinPrompts[currentPromptIndex];
+    document.getElementById('promptCategory').textContent = p.category;
+    document.getElementById('linkedinPromptText').textContent = p.prompt;
+    document.getElementById('linkedinPromptSub').textContent = p.sub;
+    document.getElementById('generatedPostArea').style.display = 'none';
+}
+
+function nextPrompt() {
+    currentPromptIndex = (currentPromptIndex + 1) % linkedinPrompts.length;
+    renderLinkedInPrompt();
+}
+
+function prevPrompt() {
+    currentPromptIndex = (currentPromptIndex - 1 + linkedinPrompts.length) % linkedinPrompts.length;
+    renderLinkedInPrompt();
+}
+
+function generateLinkedInPost() {
+    const p = linkedinPrompts[currentPromptIndex];
+    const area = document.getElementById('generatedPostArea');
+    const content = document.getElementById('generatedPostContent');
+
+    // Build a draft post based on the prompt
+    const posts = generateDraftForPrompt(currentPromptIndex);
+    content.textContent = posts;
+    area.style.display = 'block';
+    area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function generateDraftForPrompt(idx) {
+    const p = linkedinPrompts[idx];
+    const drafts = {
+        0: `Every single product we make at Woodchuck USA ships from our facility in Minneapolis.\n\nNot because it's easy. Not because it's cheap. Because it matters.\n\nWhen you manufacture domestically, you can walk the floor and fix a problem in 10 minutes instead of waiting 6 weeks for a container ship. Your team takes ownership because they see the product leave the building. Your community benefits because those paychecks get spent locally.\n\nWe've been doing this for 13 years. The math isn't always pretty, but the impact is undeniable.\n\nAmerican manufacturing isn't a slogan. It's a daily decision.\n\n#Manufacturing #MadeInUSA #Entrepreneurship`,
+
+        1: `Everyone loves the idea of "bringing manufacturing back."\n\nNobody talks about what it actually takes.\n\nFinding skilled workers when trade schools have been defunded for decades. Competing on price with operations paying $3/hour overseas. Building supply chains that don't exist anymore.\n\nI've been manufacturing in Minneapolis since 2012. Here's what I know:\n\nIt's harder than offshore. It's more expensive. It's slower to scale.\n\nAnd I'd choose it every single time.\n\nBecause when you build something real, with real people, in a real community — the ripple effect changes everything.\n\n52 jobs. Millions of trees planted. Products in millions of hands.\n\nThat doesn't happen from a spreadsheet.\n\n#USManufacturing #SmallBusiness #MadeInAmerica`,
+
+        2: `Every Woodchuck product sold plants a tree.\n\nNot a marketing gimmick. Not a checkbox. A real tree, in the ground, on one of six continents.\n\nMillions planted so far.\n\nWhen we started this company, the mission was simple: Nature back to people. Jobs back to America.\n\n13 years later, that hasn't changed. The scale has.\n\nSustainability isn't a department. It's the business model. When your product literally comes from nature, you have a responsibility to give back to it.\n\nThe best part? Our customers feel it. They're not just buying a product — they're part of something.\n\nThat's the difference between a transaction and a mission.\n\n#Sustainability #Impact #Entrepreneurship`,
+
+        3: `I wiped out on Rollerblades. Cracked my iPhone screen. Made a wood case out of scraps in the architecture shop because I couldn't afford a new phone.\n\nFriends wanted one. Then their friends. Then Target called.\n\n6 months later I'm shipping to 1,800 stores as a 22-year-old kid who had zero business experience.\n\nNo business plan. No MBA. No investors.\n\nJust a broken phone and the willingness to figure it out.\n\nThe world doesn't reward the person with the best plan. It rewards the person who starts.\n\nIf you're sitting on an idea right now, stop researching. Stop planning. Stop asking for permission.\n\nBuild something. Today.\n\n#Entrepreneurship #StartBeforeYoureReady #WoodchuckUSA`,
+
+        4: `I see it every week.\n\nSomeone with a great idea spending months on a business plan nobody will ever read.\n\nPerfecting their pitch deck. Waiting for the "right time." Researching competitors until they talk themselves out of it.\n\nMeanwhile, somebody else just... started.\n\nWhen I launched Woodchuck, I didn't have a plan. I had a wood phone case and a willingness to knock on doors.\n\nTarget didn't ask for my 5-year projections. They asked if I could deliver.\n\nThe plan is important. But it's not the thing.\n\nThe thing is doing.\n\n#Entrepreneurship #JustStart #SmallBusiness`,
+
+        5: `There was a year where I wasn't sure we'd make it.\n\nCash was tight. A product line failed. A major deal fell through at the last minute. I was working 80-hour weeks and falling behind.\n\nI remember sitting in my car in the parking lot thinking: "What if this is it?"\n\nBut then I reached into my cookie jar.\n\nEvery hard thing I'd ever done. Every obstacle I'd already overcome. The boiler room jobs. The first Target delivery. The moments where I had nothing and made something anyway.\n\nI'd done harder things before.\n\nAnd I did it again.\n\nIf you're in that season right now — you've survived 100% of your worst days. Don't forget that.\n\n#Resilience #Entrepreneurship #KeepGoing`,
+
+        6: `13 years into this and I'm relearning everything.\n\nYear 1: I was the guy who did everything. Packed boxes. Made sales calls. Fixed the machines. That hustle got us here.\n\nYear 13: That same hustle is now the ceiling.\n\nThe shift from founder to CEO is brutal. Because the things that made you successful — doing everything, solving every problem, being the answer — those are exactly the things you have to stop doing.\n\nNow it's process. People. Systems.\n\nThe new scoreboard isn't "problems solved today." It's "problems my team solved without me."\n\nHardest transition of my career. And the most important one.\n\n#Leadership #CEO #Growth`,
+
+        7: `We built a luxury resort in northern Minnesota.\n\nNo TVs in the rooms.\n\nOn purpose.\n\nWhen guests arrive at Nature Link, they look confused. "Where's the remote?" Then something shifts.\n\nThey walk to the lake. They sit on the dock. They actually talk to each other.\n\nKids play outside. Couples reconnect. Families remember what it feels like to just... be together.\n\nThe hospitality industry is obsessed with adding more screens, more tech, more stimulation.\n\nWe went the other direction. And the reviews speak for themselves.\n\nDisconnect to reconnect. That's not a tagline. It's what happens.\n\n#Hospitality #NatureLinkResorts #Disconnect`,
+
+        8: `Clark Lake, Nisswa, Minnesota.\n\nA resort has stood on this water since 1910. It's been a family retreat, a hockey camp, and everything in between.\n\nWhen we saw the property, I didn't see what it was. I saw what it could be.\n\n21 cabins. Hotel rooms. An event center. All designed around one idea: get people back to nature.\n\nRestoring a 100+ year old property isn't just construction. It's a conversation with history. Every decision — the materials, the layout, the intentional absence of TVs — honors what this land has always been.\n\nA place where people come to breathe.\n\nBuilding Nature Link has been one of the most meaningful projects of my life.\n\n#RealEstate #ResortDevelopment #Minnesota`,
+
+        9: `The best investment I've ever made isn't real estate. It isn't equipment. It isn't inventory.\n\nIt's people.\n\nI watched someone on our team go from entry-level to running an entire division. Not because we had some fancy development program. Because we gave them real responsibility, real trust, and real feedback.\n\nAcross 3 companies and 50+ team members, the pattern is always the same:\n\nGive people room to grow. Get out of their way. Watch what happens.\n\nCulture isn't a poster on the wall. It's what happens when you're not in the room.\n\nInvest in your people. Everything else follows.\n\n#Leadership #Culture #TeamBuilding`,
+
+        10: `I used to be the guy with all the answers.\n\nEvery problem came to my desk. Every decision needed my approval. Every fire got my attention.\n\nI thought that made me a good leader. It made me a bottleneck.\n\nThe turning point was the day I forced myself to not respond. A problem came up. I sat on my hands. And my team handled it. Better than I would have.\n\nThat was the day I realized: if everything depends on you, you haven't built a business. You've built a job.\n\nLet go. Trust your people. It's the hardest thing you'll do as a founder — and the most important.\n\n#Delegation #Leadership #Entrepreneurship`,
+
+        11: `I run 3 companies. I chase aggressive revenue goals. I'm building toward a $100M vision.\n\nAnd every decision I make runs through my faith first.\n\nThat's not a contradiction. It's the foundation.\n\nFollowing Christ doesn't mean playing small. It means leading with integrity when nobody's watching. Treating your team like people, not headcount. Making the hard call because it's right, not because it's profitable.\n\nI fail at this regularly. But the standard doesn't move.\n\nYou can be ambitious and humble. Driven and grateful. Building an empire and serving others.\n\nThat's the whole point.\n\n#Faith #Leadership #Entrepreneurship`,
+
+        12: `I have a $100M vision for my companies.\n\nBut if I miss my daughter's soccer game to get there, I've already lost.\n\nThis is something nobody prepares you for as an entrepreneur. The pull is constant. There's always one more email, one more deal, one more fire.\n\nBut your kids don't remember your revenue numbers. They remember if you were there.\n\nMy non-negotiables:\n→ Present at home before I'm present at work\n→ Family trips aren't optional\n→ My wife gets my best energy, not my leftovers\n\nThe real scoreboard isn't in a spreadsheet. It's in your living room.\n\n#Family #Fatherhood #Leadership`,
+
+        13: `I built a CEO dashboard this week using Claude Code.\n\nNo developers. No agency. No waiting 3 months for a quote.\n\nIt pulls live financial data from my Google Sheets, tracks my core roles across 3 companies, gives me a daily prompt to stay focused, and shows my Cookie Jar wins when I need a reminder.\n\nTotal time: one afternoon.\n\nAI isn't replacing entrepreneurs. It's giving us superpowers.\n\nIf you're a small business owner and you're not experimenting with AI tools yet, you're leaving an unfair advantage on the table.\n\nYou don't need a tech team. You need curiosity and 2 hours.\n\n#AI #ClaudeCode #SmallBusiness #Entrepreneurship`,
+
+        14: `You don't need a tech team.\n\nI know that sounds crazy coming from someone running 3 companies. But here's what I've learned:\n\nThe gap between "I have an idea" and "I built the thing" has never been smaller.\n\nThis week I used AI to:\n→ Build a live financial dashboard\n→ Analyze resort market data across 1,400+ markets\n→ Generate daily leadership prompts\n→ Create automated reporting\n\nNo code bootcamp. No CS degree. Just asking good questions and iterating.\n\nThe entrepreneurs who embrace AI now will have a 5-year head start on everyone else.\n\nStop being intimidated. Start experimenting.\n\n#AI #Entrepreneurship #Innovation`,
+
+        15: `Let me show you what taxes look like for a small manufacturer in America.\n\nWe employ 52 people. We make everything domestically. We plant trees with every sale.\n\nAnd the tax burden makes it harder every single year to compete with companies that manufacture overseas.\n\nThis isn't political. It's math.\n\nWhen we talk about "supporting small business" and "bringing jobs back to America," the policy has to match the rhetoric.\n\nI'm not asking for handouts. I'm asking for a playing field where doing the right thing doesn't come with a penalty.\n\nSmall manufacturers are the backbone of this country. Start acting like it.\n\n#Taxes #Manufacturing #SmallBusiness`,
+
+        16: `I've stood on all 7 continents.\n\nAntarctica at the bottom of the world. A market in Marrakech. A coffee farm in Colombia. A glacier in Patagonia.\n\nThe best business lessons I've ever learned didn't come from a conference or a book.\n\nThey came from watching a street vendor in Bangkok close 50 sales in an hour.\nFrom a guide in Tanzania who built a tourism business with nothing but relationships.\nFrom sitting in silence on a frozen continent and realizing how small my problems actually are.\n\nTravel doesn't just open your mind. It recalibrates your perspective.\n\nIf you can, go. Far. Often.\n\n#Travel #Perspective #Entrepreneurship`,
+
+        17: `My kids don't need a perfect dad.\n\nThey need a present one.\n\nI run 3 companies. I travel. I have weeks where the pressure is relentless.\n\nBut when I walk through that door, the laptop closes. The phone goes away. And I'm dad.\n\nNot CEO. Not founder. Not "the guy with the answers."\n\nJust dad.\n\nSome days I nail it. Some days I don't. But I show up every single time.\n\nPerfection is a myth. Presence is a choice.\n\nTo every parent juggling ambition and family: your kids are watching. Not what you achieve. How you show up.\n\nBe there.\n\n#Fatherhood #Family #Leadership`,
+
+        18: `You don't need permission.\n\nNot from investors. Not from your boss. Not from the market. Not from anyone.\n\nThe world is full of people waiting for someone to tell them it's okay to start.\n\nNobody told me it was okay to make wood phone cases in my college shop. I just did it.\n\nNobody told me it was okay to pitch Target with zero experience. I just called them.\n\nNobody told me it was okay to build a resort, start a real estate company, or write a book with a swear word in the title.\n\nI just did it.\n\nYour idea is worth pursuing. Stop waiting. Go.\n\n#Entrepreneurship #JustStart #NoExcuses`,
+
+        19: `The things that got me here won't get me to the next level.\n\nAnd honestly? That terrifies me.\n\nFor 12 years, I was rewarded for being the hardest worker in the room. The first one in, last one out. The guy who could solve any problem, build any thing, close any deal.\n\nThat identity kept score for me. Crossed things off the list. Put out fires. Felt productive.\n\nBut here's the truth: that version of me is the ceiling now.\n\nThe next level requires:\n→ Process over hustle\n→ People over personal output\n→ Systems over superhero moments\n\nI'm learning to score my value differently. It's uncomfortable. It's necessary.\n\nIf you're in this same transition — you're not losing your edge. You're finding a new one.\n\n#Leadership #Growth #CEO`
+    };
+
+    return drafts[idx] || generateGenericDraft(p);
+}
+
+function generateGenericDraft(p) {
+    return `${p.prompt}\n\n${p.sub}\n\n[Expand on this with your personal experience and specific examples]\n\n#Leadership #Entrepreneurship #Summit`;
+}
+
+function copyPost() {
+    const content = document.getElementById('generatedPostContent').textContent;
+    navigator.clipboard.writeText(content).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✅ Copied!';
+        setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+    });
+}
+
+function openInGoogleDoc() {
+    const content = document.getElementById('generatedPostContent').textContent;
+    const p = linkedinPrompts[currentPromptIndex];
+    const title = 'LinkedIn Post: ' + p.prompt;
+    // Google Docs create URL with pre-filled title and content
+    const encodedTitle = encodeURIComponent(title);
+    const encodedContent = encodeURIComponent(content);
+    // Open new Google Doc with title
+    const url = `https://docs.google.com/document/create?title=${encodedTitle}&body=${encodedContent}`;
+    window.open(url, '_blank');
+}
+
+renderLinkedInPrompt();
 
 // ==================== INIT ====================
 render();
