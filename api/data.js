@@ -1,33 +1,25 @@
-import { put, list, del, getDownloadUrl } from '@vercel/blob';
+import { put, get } from '@vercel/blob';
+import { Readable } from 'node:stream';
 
-const BLOB_KEY = 'summit-data.json';
+const BLOB_PATH = 'summit-data.json';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     try {
-      const { blobs } = await list({ prefix: BLOB_KEY });
-      if (blobs.length === 0) {
+      const result = await get(BLOB_PATH, { access: 'private' });
+      if (!result || result.statusCode !== 200) {
         return res.status(200).json(null);
       }
-      const downloadUrl = await getDownloadUrl(blobs[0].url);
-      const response = await fetch(downloadUrl);
-      const data = await response.json();
-      return res.status(200).json(data);
+      res.setHeader('Content-Type', 'application/json');
+      Readable.fromWeb(result.stream).pipe(res);
     } catch (err) {
-      console.error('GET error:', err);
+      // Blob doesn't exist yet — return null so frontend uses defaults
       return res.status(200).json(null);
     }
-  }
-
-  if (req.method === 'PUT') {
+  } else if (req.method === 'PUT') {
     try {
-      // Delete old blob first
-      const { blobs } = await list({ prefix: BLOB_KEY });
-      if (blobs.length > 0) {
-        await del(blobs.map(b => b.url));
-      }
-      // Write new blob
-      await put(BLOB_KEY, JSON.stringify(req.body), {
+      await put(BLOB_PATH, JSON.stringify(req.body), {
+        access: 'private',
         contentType: 'application/json',
         addRandomSuffix: false,
       });
@@ -36,8 +28,8 @@ export default async function handler(req, res) {
       console.error('PUT error:', err);
       return res.status(500).json({ error: 'Failed to save data' });
     }
+  } else {
+    res.setHeader('Allow', 'GET, PUT');
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-
-  res.setHeader('Allow', 'GET, PUT');
-  return res.status(405).json({ error: 'Method not allowed' });
 }
