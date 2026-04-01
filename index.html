@@ -891,7 +891,10 @@
 
             <!-- Only I Can Do -->
             <div style="margin-top: 32px;">
-                <div class="section-title">Only I Can Do &mdash; Today</div>
+                <div class="section-title" style="display: flex; align-items: center; justify-content: space-between;">
+                    Only I Can Do &mdash; Today
+                    <button class="task-action-btn" onclick="refreshTasks()" id="refreshTasksBtn" style="font-size: 0.75rem; padding: 4px 12px;">↻ Refresh</button>
+                </div>
                 <div class="only-i-section">
                     <ul class="only-i-list" id="onlyIList">
                         <!-- Populated by JS -->
@@ -1842,6 +1845,21 @@ function archiveTask(id) {
     saveData(appData);
     renderTasks();
     renderArchivedTasks();
+}
+
+async function refreshTasks() {
+    const btn = document.getElementById('refreshTasksBtn');
+    btn.textContent = '↻ Loading...';
+    try {
+        const fresh = await loadData();
+        appData.tasks = fresh.tasks;
+        appData.archivedTasks = fresh.archivedTasks || [];
+        renderTasks();
+        renderArchivedTasks();
+    } catch (err) {
+        console.error('Refresh failed:', err);
+    }
+    btn.textContent = '↻ Refresh';
 }
 
 function refreshPrompt() {
