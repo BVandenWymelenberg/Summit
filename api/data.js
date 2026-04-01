@@ -1,9 +1,13 @@
 import { put, get } from '@vercel/blob';
 import { Readable } from 'node:stream';
+import { verifyToken } from './auth.js';
 
 const BLOB_PATH = 'summit-data.json';
 
 export default async function handler(req, res) {
+  if (!verifyToken(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
   if (req.method === 'GET') {
     try {
       const result = await get(BLOB_PATH, { access: 'private' });

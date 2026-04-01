@@ -800,10 +800,100 @@
             color: var(--gold);
             margin-bottom: 16px;
         }
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--slate-900);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .login-overlay.hidden { display: none; }
+
+        .login-box {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 48px 40px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .login-box h1 {
+            font-size: 1.6rem;
+            color: var(--slate-900);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .login-box p {
+            font-size: 0.85rem;
+            color: var(--slate-500);
+            margin-bottom: 28px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--slate-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-box input:focus {
+            border-color: var(--gold);
+        }
+
+        .login-box .login-btn {
+            width: 100%;
+            margin-top: 16px;
+            padding: 14px;
+            background: var(--gold);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .login-box .login-btn:hover { background: var(--gold-light); }
+
+        .login-error {
+            color: var(--red);
+            font-size: 0.8rem;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .app-wrapper.locked { display: none; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+
+    <!-- Login Screen -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <h1>Summit</h1>
+            <p>CEO Command Center</p>
+            <input type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
+            <button class="login-btn" onclick="login()">Sign In</button>
+            <div class="login-error" id="loginError">Invalid password. Try again.</div>
+        </div>
+    </div>
+
+    <!-- App Wrapper -->
+    <div class="app-wrapper locked" id="appWrapper">
 
     <!-- Navigation -->
     <nav class="nav-tabs">
@@ -1061,7 +1151,45 @@
         </div>
     </div>
 
+    </div><!-- /app-wrapper -->
+
 <script>
+// ==================== AUTH ====================
+let authToken = sessionStorage.getItem('summit-token') || '';
+
+async function login() {
+    const pw = document.getElementById('loginPassword').value;
+    const errEl = document.getElementById('loginError');
+    errEl.style.display = 'none';
+    try {
+        const res = await fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pw }),
+        });
+        if (!res.ok) {
+            errEl.style.display = 'block';
+            return;
+        }
+        const { token } = await res.json();
+        authToken = token;
+        sessionStorage.setItem('summit-token', token);
+        unlockApp();
+    } catch (err) {
+        errEl.style.display = 'block';
+    }
+}
+
+function unlockApp() {
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('appWrapper').classList.remove('locked');
+    initApp();
+}
+
+function authHeaders(extra = {}) {
+    return { 'Authorization': `Bearer ${authToken}`, 'Content-Type': 'application/json', ...extra };
+}
+
 // ==================== FINANCIAL DATA (from Vistage Monthly Goals sheet) ====================
 // Google Sheet ID and tab for auto-fetch
 const SHEET_ID = '1YwgVi59Zy1bO4P9IjCfG_1M1Vf0YrIVwc__dOcyd74k';
@@ -1390,7 +1518,7 @@ const DAILY_PROMPTS = [
 
 async function loadData() {
     try {
-        const res = await fetch('/api/data');
+        const res = await fetch('/api/data', { headers: authHeaders() });
         const data = await res.json();
         if (data && data.companies) {
             if (!data.archivedTasks) data.archivedTasks = [];
@@ -1405,7 +1533,7 @@ async function loadData() {
 function saveData(data) {
     fetch('/api/data', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify(data),
     }).catch(err => console.error('Failed to save:', err));
 }
@@ -1834,7 +1962,7 @@ function toggleTask(id) {
         renderTasks();
         fetch(`/api/tasks?id=${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify(task),
         }).catch(err => console.error('Toggle save failed:', err));
     }
@@ -1849,7 +1977,7 @@ function archiveTask(id) {
     if (!task) return;
     appData.tasks = appData.tasks.filter(t => t.id !== id);
     renderTasks();
-    fetch(`/api/tasks?id=${id}&archive=true`, { method: 'DELETE' })
+    fetch(`/api/tasks?id=${id}&archive=true`, { method: 'DELETE', headers: authHeaders() })
         .then(() => refreshArchivedTasks())
         .catch(err => console.error('Archive failed:', err));
 }
@@ -1858,7 +1986,7 @@ async function refreshTasks() {
     const btn = document.getElementById('refreshTasksBtn');
     btn.textContent = '↻ Loading...';
     try {
-        const res = await fetch('/api/tasks');
+        const res = await fetch('/api/tasks', { headers: authHeaders() });
         appData.tasks = await res.json();
         renderTasks();
         await refreshArchivedTasks();
@@ -1870,7 +1998,7 @@ async function refreshTasks() {
 
 async function refreshArchivedTasks() {
     try {
-        const res = await fetch('/api/tasks?id=archived');
+        const res = await fetch('/api/tasks?id=archived', { headers: authHeaders() });
         appData.archivedTasks = await res.json();
         renderArchivedTasks();
     } catch (err) {
@@ -2041,7 +2169,7 @@ function saveModal() {
         appData.tasks.push(task);
         fetch('/api/tasks', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(),
             body: JSON.stringify(task),
         }).catch(err => console.error('Create task failed:', err));
     } else if (modalMode === 'edit-task') {
@@ -2054,7 +2182,7 @@ function saveModal() {
             task.company = company;
             fetch(`/api/tasks?id=${task.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: authHeaders(),
                 body: JSON.stringify(task),
             }).catch(err => console.error('Edit task failed:', err));
         }
@@ -2336,13 +2464,13 @@ function openInGoogleDoc() {
 renderLinkedInPrompt();
 
 // ==================== INIT ====================
-(async () => {
+async function initApp() {
     appData = await loadData();
     // Load tasks from dedicated task API
     try {
         const [tasksRes, archivedRes] = await Promise.all([
-            fetch('/api/tasks'),
-            fetch('/api/tasks?id=archived'),
+            fetch('/api/tasks', { headers: authHeaders() }),
+            fetch('/api/tasks?id=archived', { headers: authHeaders() }),
         ]);
         appData.tasks = await tasksRes.json();
         appData.archivedTasks = await archivedRes.json();
@@ -2351,6 +2479,24 @@ renderLinkedInPrompt();
     }
     render();
     fetchSheetData();
+}
+
+// Check for existing session token
+(async () => {
+    if (authToken) {
+        // Validate the token is still good
+        try {
+            const res = await fetch('/api/data', { headers: authHeaders() });
+            if (res.ok) {
+                unlockApp();
+                return;
+            }
+        } catch {}
+        // Token expired — clear it
+        sessionStorage.removeItem('summit-token');
+        authToken = '';
+    }
+    document.getElementById('loginPassword').focus();
 })();
 </script>
 </body>

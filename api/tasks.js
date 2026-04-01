@@ -1,5 +1,5 @@
 import { put, get, del, list } from '@vercel/blob';
-import { Readable } from 'node:stream';
+import { verifyToken } from './auth.js';
 
 const PREFIX = 'tasks/';
 const ARCHIVE_PREFIX = 'archived-tasks/';
@@ -8,6 +8,10 @@ function blobPath(id) { return `${PREFIX}${id}.json`; }
 function archiveBlobPath(id) { return `${ARCHIVE_PREFIX}${id}.json`; }
 
 export default async function handler(req, res) {
+  if (!verifyToken(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
   const { method } = req;
   const id = req.query.id;
 
