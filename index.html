@@ -1829,7 +1829,15 @@ function renderSettings() {
 
 function toggleTask(id) {
     const task = appData.tasks.find(t => t.id === id);
-    if (task) { task.done = !task.done; saveData(appData); renderTasks(); }
+    if (task) {
+        task.done = !task.done;
+        renderTasks();
+        fetch(`/api/tasks?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task),
+        }).catch(err => console.error('Toggle save failed:', err));
+    }
 }
 
 function editTask(id) {
@@ -1839,27 +1847,35 @@ function editTask(id) {
 function archiveTask(id) {
     const task = appData.tasks.find(t => t.id === id);
     if (!task) return;
-    if (!appData.archivedTasks) appData.archivedTasks = [];
-    appData.archivedTasks.push({ ...task, archivedAt: new Date().toISOString() });
     appData.tasks = appData.tasks.filter(t => t.id !== id);
-    saveData(appData);
     renderTasks();
-    renderArchivedTasks();
+    fetch(`/api/tasks?id=${id}&archive=true`, { method: 'DELETE' })
+        .then(() => refreshArchivedTasks())
+        .catch(err => console.error('Archive failed:', err));
 }
 
 async function refreshTasks() {
     const btn = document.getElementById('refreshTasksBtn');
     btn.textContent = '↻ Loading...';
     try {
-        const fresh = await loadData();
-        appData.tasks = fresh.tasks;
-        appData.archivedTasks = fresh.archivedTasks || [];
+        const res = await fetch('/api/tasks');
+        appData.tasks = await res.json();
         renderTasks();
-        renderArchivedTasks();
+        await refreshArchivedTasks();
     } catch (err) {
         console.error('Refresh failed:', err);
     }
     btn.textContent = '↻ Refresh';
+}
+
+async function refreshArchivedTasks() {
+    try {
+        const res = await fetch('/api/tasks?id=archived');
+        appData.archivedTasks = await res.json();
+        renderArchivedTasks();
+    } catch (err) {
+        console.error('Refresh archived failed:', err);
+    }
 }
 
 function refreshPrompt() {
@@ -2020,14 +2036,28 @@ function saveModal() {
         const text = document.getElementById('modalInput1').value.trim();
         const company = document.getElementById('modalInput2').value;
         if (!text) return;
-        const maxId = appData.tasks.reduce((max, t) => Math.max(max, t.id), 0);
-        appData.tasks.push({ id: maxId + 1, text, company, done: false });
+        const id = Date.now();
+        const task = { id, text, company, done: false };
+        appData.tasks.push(task);
+        fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task),
+        }).catch(err => console.error('Create task failed:', err));
     } else if (modalMode === 'edit-task') {
         const text = document.getElementById('modalInput1').value.trim();
         const company = document.getElementById('modalInput2').value;
         if (!text) return;
         const task = appData.tasks.find(t => t.id === modalContext);
-        if (task) { task.text = text; task.company = company; }
+        if (task) {
+            task.text = text;
+            task.company = company;
+            fetch(`/api/tasks?id=${task.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(task),
+            }).catch(err => console.error('Edit task failed:', err));
+        }
     } else if (modalMode === 'cookie') {
         const text = document.getElementById('modalInput1').value.trim();
         if (!text) return;
@@ -2308,6 +2338,17 @@ renderLinkedInPrompt();
 // ==================== INIT ====================
 (async () => {
     appData = await loadData();
+    // Load tasks from dedicated task API
+    try {
+        const [tasksRes, archivedRes] = await Promise.all([
+            fetch('/api/tasks'),
+            fetch('/api/tasks?id=archived'),
+        ]);
+        appData.tasks = await tasksRes.json();
+        appData.archivedTasks = await archivedRes.json();
+    } catch (err) {
+        console.error('Failed to load tasks from API:', err);
+    }
     render();
     fetchSheetData();
 })();
