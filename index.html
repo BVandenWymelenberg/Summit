@@ -903,6 +903,7 @@
         <div class="nav-tab active" data-tab="dashboard">Dashboard</div>
         <div class="nav-tab" data-tab="scorecard">Scorecard</div>
         <div class="nav-tab" data-tab="cookiejar">Cookie Jar</div>
+        <div class="nav-tab" data-tab="archived">Archived</div>
         <div class="nav-tab" data-tab="settings">Settings</div>
     </nav>
 
@@ -1114,6 +1115,17 @@
             <button class="add-btn" onclick="openModal('cookie')">+ Add a Cookie</button>
         </div>
 
+        <!-- ==================== ARCHIVED TAB ==================== -->
+        <div class="tab-content" id="tab-archived">
+            <div class="section-title">Archived Tasks</div>
+            <p style="font-size: 0.9rem; color: var(--slate-500); line-height: 1.6; margin-bottom: 24px; max-width: 700px;">
+                Completed and archived tasks from your "Only I Can Do" list.
+            </p>
+            <div class="only-i-section" id="archivedTasksList">
+                <p style="font-size: 0.85rem; color: var(--slate-400);">No archived tasks yet.</p>
+            </div>
+        </div>
+
         <!-- ==================== SETTINGS TAB ==================== -->
         <div class="tab-content" id="tab-settings">
             <div class="section-title">Organizations &amp; Core Roles</div>
@@ -1121,13 +1133,6 @@
                 <!-- Populated by JS -->
             </div>
             <button class="add-btn" style="margin-top: 16px;" onclick="openModal('company')">+ Add Organization</button>
-
-            <div style="margin-top: 32px;">
-                <div class="section-title">Archived Tasks</div>
-                <div class="only-i-section" id="archivedTasksList">
-                    <p style="font-size: 0.85rem; color: var(--slate-400);">No archived tasks yet.</p>
-                </div>
-            </div>
 
             <div style="margin-top: 32px;">
                 <div class="section-title">Data</div>
