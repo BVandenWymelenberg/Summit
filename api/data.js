@@ -28,7 +28,6 @@ export default async function handler(req, res) {
       }
       // Write new blob
       await put(BLOB_KEY, JSON.stringify(req.body), {
-        access: 'private',
         contentType: 'application/json',
         addRandomSuffix: false,
       });
