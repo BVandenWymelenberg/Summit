@@ -19,8 +19,10 @@ export default async function handler(req, res) {
   if (method === 'GET' && !id) {
     try {
       const { blobs } = await list({ prefix: PREFIX });
+      // Only include blobs that are directly under tasks/, not archived-tasks/
+      const activeBlobs = blobs.filter(b => b.pathname.startsWith(PREFIX) && !b.pathname.startsWith(ARCHIVE_PREFIX));
       const tasks = await Promise.all(
-        blobs.map(async (b) => {
+        activeBlobs.map(async (b) => {
           try {
             const result = await get(b.pathname, { access: 'private' });
             if (result?.statusCode === 200) {
@@ -98,10 +100,14 @@ export default async function handler(req, res) {
   if (method === 'DELETE' && id) {
     try {
       const archive = req.query.archive === 'true';
-      if (archive) {
-        // Read the task first, then move to archive
+      // Read the task blob
+      let taskBlobUrl = null;
+      const { blobs } = await list({ prefix: PREFIX });
+      const match = blobs.find(b => b.pathname === blobPath(id));
+
+      if (archive && match) {
         try {
-          const result = await get(blobPath(id), { access: 'private' });
+          const result = await get(match.pathname, { access: 'private' });
           if (result?.statusCode === 200) {
             const text = await new Response(result.stream).text();
             const task = JSON.parse(text);
@@ -110,14 +116,15 @@ export default async function handler(req, res) {
               access: 'private',
               contentType: 'application/json',
               addRandomSuffix: false,
+              allowOverwrite: true,
             });
           }
-        } catch { /* task may not exist, that's ok */ }
+        } catch (e) { console.error('Archive copy error:', e); }
       }
+
       // Delete from active tasks
-      const { blobs } = await list({ prefix: blobPath(id) });
-      if (blobs.length > 0) {
-        await del(blobs.map(b => b.url));
+      if (match) {
+        await del(match.url);
       }
       return res.status(200).json({ ok: true });
     } catch (err) {
