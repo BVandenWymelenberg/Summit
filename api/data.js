@@ -1,4 +1,4 @@
-import { put, list, del } from '@vercel/blob';
+import { put, list, del, getDownloadUrl } from '@vercel/blob';
 
 const BLOB_KEY = 'summit-data.json';
 
@@ -9,7 +9,8 @@ export default async function handler(req, res) {
       if (blobs.length === 0) {
         return res.status(200).json(null);
       }
-      const response = await fetch(blobs[0].url);
+      const downloadUrl = await getDownloadUrl(blobs[0].url);
+      const response = await fetch(downloadUrl);
       const data = await response.json();
       return res.status(200).json(data);
     } catch (err) {
@@ -27,7 +28,7 @@ export default async function handler(req, res) {
       }
       // Write new blob
       await put(BLOB_KEY, JSON.stringify(req.body), {
-        access: 'public',
+        access: 'private',
         contentType: 'application/json',
         addRandomSuffix: false,
       });
