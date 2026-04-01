@@ -886,7 +886,10 @@
         <div class="login-box">
             <h1>Summit</h1>
             <p>CEO Command Center</p>
-            <input type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
+            <div style="position: relative;">
+                <input type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()" style="padding-right: 48px;">
+                <button type="button" onclick="togglePasswordVisibility()" id="eyeToggle" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 1.2rem; color: var(--slate-400); padding: 4px;">👁</button>
+            </div>
             <button class="login-btn" onclick="login()">Sign In</button>
             <div class="login-error" id="loginError">Invalid password. Try again.</div>
         </div>
@@ -1177,6 +1180,18 @@ async function login() {
         unlockApp();
     } catch (err) {
         errEl.style.display = 'block';
+    }
+}
+
+function togglePasswordVisibility() {
+    const input = document.getElementById('loginPassword');
+    const btn = document.getElementById('eyeToggle');
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = '👁‍🗨';
+    } else {
+        input.type = 'password';
+        btn.textContent = '👁';
     }
 }
 
