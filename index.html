@@ -1385,18 +1385,29 @@ const DAILY_PROMPTS = [
     "What's one thing you need to STOP doing to free up space for what only you can do?"
 ];
 
-function loadData() {
-    const saved = localStorage.getItem('summit-data');
-    const data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
-    if (!data.archivedTasks) data.archivedTasks = [];
-    return data;
+async function loadData() {
+    try {
+        const res = await fetch('/api/data');
+        const data = await res.json();
+        if (data && data.companies) {
+            if (!data.archivedTasks) data.archivedTasks = [];
+            return data;
+        }
+    } catch (err) {
+        console.error('Failed to load from API:', err);
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_DATA));
 }
 
 function saveData(data) {
-    localStorage.setItem('summit-data', JSON.stringify(data));
+    fetch('/api/data', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    }).catch(err => console.error('Failed to save:', err));
 }
 
-let appData = loadData();
+let appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
 
 // ==================== RENDERING ====================
 
@@ -2277,8 +2288,11 @@ function openInGoogleDoc() {
 renderLinkedInPrompt();
 
 // ==================== INIT ====================
-render();
-fetchSheetData();
+(async () => {
+    appData = await loadData();
+    render();
+    fetchSheetData();
+})();
 </script>
 </body>
 </html>
