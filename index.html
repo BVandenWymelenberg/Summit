@@ -383,6 +383,60 @@
             font-weight: 600;
         }
 
+        .only-i-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .task-action-btn {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--slate-200);
+            background: var(--white);
+            color: var(--slate-500);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .task-action-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+        }
+
+        .task-action-btn.archive-btn:hover {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .archived-task-item {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--slate-100);
+        }
+
+        .archived-task-item:last-child { border-bottom: none; }
+
+        .archived-task-text {
+            font-size: 0.9rem;
+            color: var(--slate-400);
+            line-height: 1.5;
+        }
+
+        .archived-task-meta {
+            font-size: 0.65rem;
+            color: var(--slate-300);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
         /* Cookie Jar Section */
         .cookie-jar {
             background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
@@ -973,6 +1027,13 @@
             <button class="add-btn" style="margin-top: 16px;" onclick="openModal('company')">+ Add Organization</button>
 
             <div style="margin-top: 32px;">
+                <div class="section-title">Archived Tasks</div>
+                <div class="only-i-section" id="archivedTasksList">
+                    <p style="font-size: 0.85rem; color: var(--slate-400);">No archived tasks yet.</p>
+                </div>
+            </div>
+
+            <div style="margin-top: 32px;">
                 <div class="section-title">Data</div>
                 <div class="only-i-section">
                     <div style="display: flex; gap: 12px;">
@@ -1180,6 +1241,7 @@ const DEFAULT_DATA = {
         { id: 3, text: 'Review Nature Link partnership proposal', company: 'Nature Link', done: false },
         { id: 4, text: 'Define hiring criteria for Workbench ops role', company: 'Workbench Studios', done: false }
     ],
+    archivedTasks: [],
     cookies: [
         // ── 2013-2022: The Foundation Years ──
         'Started Woodchuck from nothing — built a company from a wooden phone skin idea into a multi-million-dollar business with zero business background, coming from a small Minnesota farm town. (~2013)',
@@ -1325,7 +1387,9 @@ const DAILY_PROMPTS = [
 
 function loadData() {
     const saved = localStorage.getItem('summit-data');
-    return saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+    const data = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+    if (!data.archivedTasks) data.archivedTasks = [];
+    return data;
 }
 
 function saveData(data) {
@@ -1344,6 +1408,7 @@ function render() {
     renderCookies();
     renderCookieOfTheDay();
     renderSettings();
+    renderArchivedTasks();
 }
 
 function formatMoney(n) {
@@ -1680,12 +1745,16 @@ function renderCompanies() {
 
 function renderTasks() {
     const list = document.getElementById('onlyIList');
-    list.innerHTML = appData.tasks.map(t => `
+    list.innerHTML = appData.tasks.filter(t => !t.archived).map(t => `
         <li class="only-i-item">
             <div class="only-i-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask(${t.id})"></div>
-            <div>
+            <div style="flex: 1;">
                 <div class="only-i-text ${t.done ? 'completed' : ''}">${t.text}</div>
                 <div class="only-i-company">${t.company}</div>
+                <div class="only-i-actions">
+                    <button class="task-action-btn" onclick="editTask(${t.id})">Edit</button>
+                    <button class="task-action-btn archive-btn" onclick="archiveTask(${t.id})">Archive</button>
+                </div>
             </div>
         </li>
     `).join('');
@@ -1695,6 +1764,23 @@ function renderCookies() {
     const jar = document.getElementById('cookieJar');
     jar.innerHTML = appData.cookies.map((c, i) => `
         <div class="cookie-item" onclick="highlightCookie(this)">${c}</div>
+    `).join('');
+}
+
+function renderArchivedTasks() {
+    const el = document.getElementById('archivedTasksList');
+    const archived = appData.archivedTasks || [];
+    if (archived.length === 0) {
+        el.innerHTML = '<p style="font-size: 0.85rem; color: var(--slate-400);">No archived tasks yet.</p>';
+        return;
+    }
+    el.innerHTML = archived.slice().reverse().map(t => `
+        <div class="archived-task-item">
+            <div>
+                <div class="archived-task-text">${t.text}</div>
+                <div class="archived-task-meta">${t.company}${t.archivedAt ? ' · ' + new Date(t.archivedAt).toLocaleDateString() : ''}</div>
+            </div>
+        </div>
     `).join('');
 }
 
@@ -1730,6 +1816,21 @@ function renderSettings() {
 function toggleTask(id) {
     const task = appData.tasks.find(t => t.id === id);
     if (task) { task.done = !task.done; saveData(appData); renderTasks(); }
+}
+
+function editTask(id) {
+    openModal('edit-task', id);
+}
+
+function archiveTask(id) {
+    const task = appData.tasks.find(t => t.id === id);
+    if (!task) return;
+    if (!appData.archivedTasks) appData.archivedTasks = [];
+    appData.archivedTasks.push({ ...task, archivedAt: new Date().toISOString() });
+    appData.tasks = appData.tasks.filter(t => t.id !== id);
+    saveData(appData);
+    renderTasks();
+    renderArchivedTasks();
 }
 
 function refreshPrompt() {
@@ -1829,6 +1930,22 @@ function openModal(mode, context) {
                 </select>
             </div>
         `;
+    } else if (mode === 'edit-task') {
+        const task = appData.tasks.find(t => t.id === context);
+        title.textContent = 'Edit Task';
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">Task</label>
+                <input class="form-input" id="modalInput1" value="${task ? task.text.replace(/"/g, '&quot;') : ''}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Organization</label>
+                <select class="form-input" id="modalInput2">
+                    <option value="All" ${task?.company === 'All' ? 'selected' : ''}>All</option>
+                    ${appData.companies.map(c => `<option value="${c.name}" ${task?.company === c.name ? 'selected' : ''}>${c.name}</option>`).join('')}
+                </select>
+            </div>
+        `;
     } else if (mode === 'cookie') {
         title.textContent = 'Add to Your Cookie Jar';
         body.innerHTML = `
@@ -1876,6 +1993,12 @@ function saveModal() {
         if (!text) return;
         const maxId = appData.tasks.reduce((max, t) => Math.max(max, t.id), 0);
         appData.tasks.push({ id: maxId + 1, text, company, done: false });
+    } else if (modalMode === 'edit-task') {
+        const text = document.getElementById('modalInput1').value.trim();
+        const company = document.getElementById('modalInput2').value;
+        if (!text) return;
+        const task = appData.tasks.find(t => t.id === modalContext);
+        if (task) { task.text = text; task.company = company; }
     } else if (modalMode === 'cookie') {
         const text = document.getElementById('modalInput1').value.trim();
         if (!text) return;
