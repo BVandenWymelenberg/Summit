@@ -456,8 +456,11 @@
             font-size: 0.9rem;
             color: var(--slate-700);
             line-height: 1.5;
-            cursor: pointer;
             transition: all 0.2s;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
         }
 
         .cookie-item:hover {
@@ -466,6 +469,29 @@
         }
 
         .cookie-item:last-child { margin-bottom: 0; }
+
+        .cookie-item-text {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .cookie-delete-btn {
+            flex-shrink: 0;
+            background: none;
+            border: none;
+            color: var(--slate-300);
+            font-size: 1.1rem;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            transition: color 0.2s;
+            font-family: 'Inter', sans-serif;
+            margin-top: -1px;
+        }
+
+        .cookie-delete-btn:hover {
+            color: var(--red);
+        }
 
         /* Scorecard Section */
         .scorecard-grid {
@@ -1920,7 +1946,10 @@ function renderTasks() {
 function renderCookies() {
     const jar = document.getElementById('cookieJar');
     jar.innerHTML = appData.cookies.map((c, i) => `
-        <div class="cookie-item" onclick="highlightCookie(this)">${c}</div>
+        <div class="cookie-item">
+            <span class="cookie-item-text" onclick="openModal('edit-cookie', ${i})">${c}</span>
+            <button class="cookie-delete-btn" onclick="deleteCookie(${i})" title="Delete cookie">×</button>
+        </div>
     `).join('');
 }
 
@@ -2035,6 +2064,13 @@ function highlightCookie(el) {
     setTimeout(() => { el.style.borderColor = ''; el.style.background = ''; }, 2000);
 }
 
+function deleteCookie(index) {
+    if (!confirm('Remove this cookie from your jar?')) return;
+    appData.cookies.splice(index, 1);
+    saveData(appData);
+    renderCookies();
+}
+
 function cycleScore(el) {
     const states = [
         { text: 'Yes', class: 'score-high' },
@@ -2142,6 +2178,15 @@ function openModal(mode, context) {
                 <textarea class="form-input" id="modalInput1" rows="3" placeholder="Describe a win, obstacle overcome, or moment of strength..."></textarea>
             </div>
         `;
+    } else if (mode === 'edit-cookie') {
+        title.textContent = 'Edit Cookie';
+        const existing = appData.cookies[context] || '';
+        body.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">What have you overcome or achieved?</label>
+                <textarea class="form-input" id="modalInput1" rows="3">${existing}</textarea>
+            </div>
+        `;
     } else if (mode === 'role') {
         const company = appData.companies.find(c => c.id === context);
         title.textContent = `Add Role to ${company?.name || ''}`;
@@ -2205,6 +2250,10 @@ function saveModal() {
         const text = document.getElementById('modalInput1').value.trim();
         if (!text) return;
         appData.cookies.push(text);
+    } else if (modalMode === 'edit-cookie') {
+        const text = document.getElementById('modalInput1').value.trim();
+        if (!text) return;
+        appData.cookies[modalContext] = text;
     } else if (modalMode === 'role') {
         const name = document.getElementById('modalInput1').value.trim();
         if (!name) return;
