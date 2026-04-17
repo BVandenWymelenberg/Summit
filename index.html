@@ -1047,7 +1047,7 @@
             <div style="margin-top: 32px;">
                 <div class="section-title" style="display: flex; align-items: center; gap: 8px;">💼 LinkedIn Post Prompt</div>
                 <div id="linkedinPromptCard" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid var(--slate-200); border-radius: 12px; padding: 28px; margin-top: 12px; position: relative; overflow: hidden;">
-                    <div style="position: absolute; top: -15px; right: -5px; font-size: 70px; opacity: 0.05;">✍️</div>
+                    <div style="position: absolute; top: -15px; right: -5px; font-size: 70px; opacity: 0.05; pointer-events: none;">✍️</div>
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
                         <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--gold); font-weight: 600;" id="promptCategory">CATEGORY</span>
                         <div style="display: flex; gap: 8px; align-items: center;">
@@ -2524,10 +2524,10 @@ async function generateLinkedInPost() {
         if (data.post) {
             content.textContent = data.post;
         } else {
-            content.textContent = 'Error generating post. Please try again.';
+            content.textContent = '⚠️ ' + (data.error || 'Error generating post — check Vercel env vars.');
         }
     } catch(err) {
-        content.textContent = 'Error: ' + err.message;
+        content.textContent = '⚠️ Network error: ' + err.message;
     } finally {
         if (btn) { btn.innerHTML = '<span style="font-size:1.1rem;">in</span> Generate Post →'; btn.disabled = false; }
     }
